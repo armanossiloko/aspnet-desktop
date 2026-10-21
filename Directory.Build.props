@@ -5,6 +5,8 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <InvariantGlobalization>true</InvariantGlobalization>
+    <!-- Lets Linux/macOS build the net10.0-windows adapter (and the metapackage's Windows target). -->
+    <EnableWindowsTargeting>true</EnableWindowsTargeting>
     <AspNetDesktopRepoRoot>$(MSBuildThisFileDirectory)</AspNetDesktopRepoRoot>
     <ContinuousIntegrationBuild Condition="'$(GITHUB_ACTIONS)' == 'true'">true</ContinuousIntegrationBuild>
   </PropertyGroup>
