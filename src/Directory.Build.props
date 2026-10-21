@@ -1,0 +1,46 @@
+<Project>
+  <Import Project="$([MSBuild]::GetPathOfFileAbove('Directory.Build.props', '$(MSBuildThisFileDirectory)../'))" />
+
+  <!-- Package metadata shared by every AspNetDesktop package. -->
+  <PropertyGroup>
+    <Authors>Arman Ossi Loko</Authors>
+    <Copyright>Copyright (c) Arman Ossi Loko</Copyright>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageProjectUrl>https://github.com/armanossiloko/aspnet-desktop</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/armanossiloko/aspnet-desktop.git</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageReleaseNotes>https://github.com/armanossiloko/aspnet-desktop/releases</PackageReleaseNotes>
+    <PackageTags>aspnetcore;desktop;webview;webview2;wkwebview;webkitgtk;angular;react;tauri;electron</PackageTags>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageIcon>icon.png</PackageIcon>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <!-- Public API carries XML docs; internals are not required to. -->
+    <NoWarn>$(NoWarn);CS1591</NoWarn>
+  </PropertyGroup>
+
+  <!-- Source Link (built into the SDK), symbols and reproducible builds. -->
+  <PropertyGroup>
+    <PublishRepositoryUrl>true</PublishRepositoryUrl>
+    <EmbedUntrackedSources>true</EmbedUntrackedSources>
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+    <Deterministic>true</Deterministic>
+    <EnablePackageValidation>true</EnablePackageValidation>
+  </PropertyGroup>
+
+  <!-- Versions come from git tags (v1.2.3); untagged commits build as the next patch's preview. -->
+  <PropertyGroup>
+    <MinVerTagPrefix>v</MinVerTagPrefix>
+    <MinVerMinimumMajorMinor>0.1</MinVerMinimumMajorMinor>
+    <MinVerDefaultPreReleaseIdentifiers>preview.0</MinVerDefaultPreReleaseIdentifiers>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="MinVer" PrivateAssets="all" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="$(AspNetDesktopRepoRoot)README.md" Pack="true" PackagePath="\" Visible="false" />
+    <None Include="$(AspNetDesktopRepoRoot)assets/icon.png" Pack="true" PackagePath="\" Visible="false" />
+  </ItemGroup>
+</Project>

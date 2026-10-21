@@ -1,0 +1,144 @@
+.shell {
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: 40px 32px 56px;
+}
+
+.masthead {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 20px;
+  align-items: center;
+  margin-bottom: 32px;
+}
+
+.mark {
+  width: 52px;
+  height: 52px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, var(--accent) 0%, var(--accent-2) 100%);
+  box-shadow: 0 8px 24px color-mix(in srgb, var(--accent) 35%, transparent);
+}
+
+h1 {
+  margin: 0;
+  font-size: 1.75rem;
+  letter-spacing: -0.02em;
+}
+
+.plus {
+  color: var(--muted);
+  font-weight: 400;
+}
+
+.lede {
+  margin: 6px 0 0;
+  color: var(--muted);
+  max-width: 62ch;
+}
+
+.badge {
+  align-self: start;
+  padding: 4px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  color: var(--muted);
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 20px;
+}
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 20px 22px;
+}
+
+.card h2 {
+  margin: 0;
+  font-size: 1.05rem;
+}
+
+.route {
+  margin: 4px 0 16px;
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+.facts {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 6px 16px;
+  margin: 0;
+}
+
+.facts dt {
+  color: var(--muted);
+}
+
+.facts dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.orders {
+  list-style: none;
+  margin: 0 0 14px;
+  padding: 0;
+}
+
+.orders li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.qty {
+  font-variant-numeric: tabular-nums;
+  color: var(--muted);
+  min-width: 2.5ch;
+}
+
+.product {
+  flex: 1;
+}
+
+.order-form {
+  display: flex;
+  gap: 8px;
+}
+
+.order-form input[name='product'] {
+  flex: 1;
+  min-width: 0;
+}
+
+.order-form input[type='number'] {
+  width: 4.5rem;
+}
+
+.repo a {
+  font-weight: 600;
+}
+
+.stars {
+  font-variant-numeric: tabular-nums;
+}
+
+.muted {
+  color: var(--muted);
+}
+
+.error {
+  color: var(--danger);
+  margin: 8px 0 0;
+}

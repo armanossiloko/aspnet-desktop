@@ -1,0 +1,190 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+  workflow_call:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+env:
+  DOTNET_NOLOGO: true
+  DOTNET_CLI_TELEMETRY_OPTOUT: true
+  DOTNET_SKIP_FIRST_TIME_EXPERIENCE: true
+  NUGET_XMLDOC_MODE: skip
+
+jobs:
+  client:
+    name: JS client
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+      - run: npm run build:client
+      - run: npm run typecheck -w aspnetdesktop-client
+      - run: npm run test:client
+
+      - name: Build sample frontends
+        run: npm run build -w angular-app-client -w react-app-client
+
+      - name: Check package contents
+        run: npm pack -w aspnetdesktop-client --dry-run
+
+  build:
+    name: Build & test (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, ubuntu-24.04, macos-26]
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Install macOS workload
+        if: runner.os != 'Linux'
+        run: dotnet workload install macos
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      # Release builds also run the samples' MSBuild targets that build the frontends into wwwroot.
+      - name: Build
+        run: dotnet build AspNetDesktop.slnx -c Release
+
+      - name: Test
+        run: dotnet test --solution AspNetDesktop.slnx -c Release --no-build
+
+  smoke:
+    name: WebView smoke test (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            run: dotnet run --project tests/AspNetDesktop.SmokeTests -c Release --no-build
+          - os: ubuntu-24.04
+            run: xvfb-run -a dotnet run --project tests/AspNetDesktop.SmokeTests -c Release --no-build
+          - os: macos-26
+            run: dotnet run --project tests/AspNetDesktop.SmokeTests -c Release --no-build
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Install macOS workload
+        if: runner.os == 'macOS'
+        run: dotnet workload install macos
+
+      - name: Install GTK 4 and WebKitGTK 6
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends libgtk-4-1 libwebkitgtk-6.0-4 xvfb xauth
+          # WebKit's bubblewrap sandbox needs unprivileged user namespaces, which Ubuntu 24.04 restricts.
+          sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+      - run: npm run build:client
+
+      - name: Build smoke test
+        run: dotnet build tests/AspNetDesktop.SmokeTests -c Release
+
+      - name: Run smoke test
+        run: ${{ matrix.run }}
+        env:
+          # Software rendering for headless runners without a GPU.
+          LIBGL_ALWAYS_SOFTWARE: 1
+          WEBKIT_DISABLE_DMABUF_RENDERER: 1
+
+  pack:
+    name: Pack & template check
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: 10.0.x
+
+      # The AspNetDesktop metapackage includes the net10.0-macos target.
+      - name: Install macOS workload
+        run: dotnet workload install macos
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - name: Pack NuGet packages
+        run: dotnet pack AspNetDesktop.slnx -c Release -o artifacts -p:SkipClientBuild=true
+
+      - name: Pack npm package
+        run: npm pack -w aspnetdesktop-client --pack-destination artifacts
+
+      - name: Instantiate and build the templates
+        shell: bash
+        run: |
+          set -euo pipefail
+          artifacts="$(pwd -W)/artifacts"
+          work="$RUNNER_TEMP/template-check"
+          hive="$RUNNER_TEMP/template-hive"
+          mkdir -p "$work"
+          dotnet new install "$(ls "$artifacts"/AspNetDesktop.Templates.*.nupkg)" --debug:custom-hive "$hive"
+          cat > "$work/nuget.config" <<EOF
+          <?xml version="1.0" encoding="utf-8"?>
+          <configuration>
+            <packageSources>
+              <clear />
+              <add key="local" value="$artifacts" />
+              <add key="nuget.org" value="https://api.nuget.org/v3/index.json" />
+            </packageSources>
+          </configuration>
+          EOF
+          for template in angular react; do
+            dotnet new "aspnetdesktop-$template" -o "$work/My${template^}App" --debug:custom-hive "$hive"
+            dotnet build "$work/My${template^}App" --packages "$work/packages"
+          done
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: packages
+          path: artifacts/
+          if-no-files-found: error

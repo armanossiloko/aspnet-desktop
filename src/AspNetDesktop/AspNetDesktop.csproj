@@ -1,0 +1,39 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <Import Project="..\MacWorkload.props" />
+
+  <PropertyGroup>
+    <TargetFrameworks>net10.0;net10.0-windows</TargetFrameworks>
+    <TargetFrameworks Condition="'$(AspNetDesktopBuildMac)' == 'true'">$(TargetFrameworks);net10.0-macos</TargetFrameworks>
+    <RootNamespace>AspNetDesktop</RootNamespace>
+    <Description>Build desktop apps with an ASP.NET Core backend and any JavaScript UI. Hosts MVC and minimal APIs in-process behind the WebView's app:// and ipc:// schemes: no Kestrel, no TCP port. Pulls in the adapter for the target OS (WebView2, WKWebView or WebKitGTK).</Description>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(TargetFramework)' == 'net10.0-windows'">
+    <UseWindowsForms>true</UseWindowsForms>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(TargetFramework)' == 'net10.0-macos'">
+    <SupportedOSPlatformVersion>12.0</SupportedOSPlatformVersion>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    <ProjectReference Include="..\AspNetDesktop.Hosting\AspNetDesktop.Hosting.csproj" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(TargetFramework)' == 'net10.0'">
+    <ProjectReference Include="..\AspNetDesktop.Linux\AspNetDesktop.Linux.csproj" PrivateAssets="none" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(TargetFramework)' == 'net10.0-windows'">
+    <ProjectReference Include="..\AspNetDesktop.Windows\AspNetDesktop.Windows.csproj" PrivateAssets="none" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(TargetFramework)' == 'net10.0-macos'">
+    <ProjectReference Include="..\AspNetDesktop.Mac\AspNetDesktop.Mac.csproj" PrivateAssets="none" />
+  </ItemGroup>
+
+  <Import Project="..\AspNetDesktop.Windows\buildTransitive\AspNetDesktop.Windows.targets" Condition="'$(TargetFramework)' == 'net10.0-windows'" />
+
+</Project>

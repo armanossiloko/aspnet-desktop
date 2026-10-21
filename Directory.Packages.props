@@ -1,0 +1,16 @@
+<Project>
+  <PropertyGroup>
+    <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+  </PropertyGroup>
+  <ItemGroup>
+    <!-- Windows -->
+    <PackageVersion Include="Microsoft.Web.WebView2" Version="1.0.4258.31" />
+    <!-- Linux -->
+    <PackageVersion Include="GirCore.Gtk-4.0" Version="0.8.1" />
+    <PackageVersion Include="GirCore.WebKit-6.0" Version="0.8.1" />
+    <!-- Build -->
+    <PackageVersion Include="MinVer" Version="8.0.0" />
+    <!-- Tests -->
+    <PackageVersion Include="xunit.v3" Version="4.0.2" />
+  </ItemGroup>
+</Project>

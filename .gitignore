@@ -1,0 +1,28 @@
+# Reference project (separate repository)
+/reference/
+
+# .NET
+[Bb]in/
+[Oo]bj/
+
+*.user
+*.suo
+.vs/
+*.binlog
+TestResults/
+
+# Node
+node_modules/
+dist/
+.angular/
+*.tsbuildinfo
+npm-debug.log*
+
+# Sample frontend builds are copied into wwwroot at build time
+samples/*/wwwroot/
+
+# IDE
+.idea/
+.vscode/*
+!.vscode/extensions.json
+/artifacts/

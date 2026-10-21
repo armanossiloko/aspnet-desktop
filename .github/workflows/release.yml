@@ -1,0 +1,188 @@
+name: Release
+
+on:
+  push:
+    tags: ['v[0-9]+.[0-9]+.[0-9]+*']
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  DOTNET_NOLOGO: true
+  DOTNET_CLI_TELEMETRY_OPTOUT: true
+  DOTNET_SKIP_FIRST_TIME_EXPERIENCE: true
+
+jobs:
+  ci:
+    name: CI
+    uses: ./.github/workflows/ci.yml
+
+  package:
+    name: Package
+    needs: ci
+    runs-on: windows-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      prerelease: ${{ steps.version.outputs.prerelease }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Read version from tag
+        id: version
+        shell: bash
+        run: |
+          version="${GITHUB_REF_NAME#v}"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          if [[ "$version" == *-* ]]; then echo "prerelease=true" >> "$GITHUB_OUTPUT"; else echo "prerelease=false" >> "$GITHUB_OUTPUT"; fi
+
+      - uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Install macOS workload
+        run: dotnet workload install macos
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - name: Pack NuGet packages
+        run: dotnet pack AspNetDesktop.slnx -c Release -o artifacts -p:SkipClientBuild=true
+
+      - name: Check NuGet package versions match the tag
+        shell: bash
+        run: |
+          shopt -s nullglob
+          packages=(artifacts/*.nupkg)
+          test ${#packages[@]} -eq 6
+          for package in "${packages[@]}"; do
+            [[ "$package" == *".${{ steps.version.outputs.version }}.nupkg" ]] || { echo "::error::$package does not match ${{ steps.version.outputs.version }}"; exit 1; }
+          done
+
+      - name: Pack npm package
+        shell: bash
+        run: |
+          npm version "${{ steps.version.outputs.version }}" --no-git-tag-version -w aspnetdesktop-client
+          npm pack -w aspnetdesktop-client --pack-destination artifacts
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: release-packages
+          path: artifacts/
+          if-no-files-found: error
+
+  publish-nuget:
+    name: Publish to nuget.org
+    needs: package
+    runs-on: ubuntu-24.04
+    environment: release
+    permissions:
+      contents: read
+      id-token: write # NuGet trusted publishing
+    steps:
+      - uses: actions/download-artifact@v8
+        with:
+          name: release-packages
+          path: artifacts
+
+      - uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Log in to nuget.org (trusted publishing)
+        id: nuget-login
+        if: vars.NUGET_USER != ''
+        uses: NuGet/login@v1
+        with:
+          user: ${{ vars.NUGET_USER }}
+
+      - name: Push packages
+        env:
+          NUGET_API_KEY: ${{ steps.nuget-login.outputs.NUGET_API_KEY || secrets.NUGET_API_KEY }}
+        run: |
+          if [ -z "$NUGET_API_KEY" ]; then
+            echo "::error::Configure NuGet trusted publishing (vars.NUGET_USER) or the NUGET_API_KEY secret. See docs/releasing.md."
+            exit 1
+          fi
+          # Symbol packages (.snupkg) next to each .nupkg are pushed automatically.
+          dotnet nuget push "artifacts/*.nupkg" --api-key "$NUGET_API_KEY" --source https://api.nuget.org/v3/index.json --skip-duplicate
+
+  publish-npm:
+    name: Publish to npm
+    needs: package
+    runs-on: ubuntu-24.04
+    environment: release
+    permissions:
+      contents: read
+      id-token: write # npm provenance and trusted publishing
+    steps:
+      - uses: actions/download-artifact@v8
+        with:
+          name: release-packages
+          path: artifacts
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          registry-url: https://registry.npmjs.org
+
+      # Trusted publishing needs npm 11.5.1 or later.
+      - run: npm install -g npm@latest
+
+      - name: Publish
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          DIST_TAG: ${{ needs.package.outputs.prerelease == 'true' && 'next' || 'latest' }}
+        run: npm publish artifacts/aspnetdesktop-client-*.tgz --access public --provenance --tag "$DIST_TAG"
+
+  github-release:
+    name: GitHub Release
+    needs: [package, publish-nuget, publish-npm]
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/download-artifact@v8
+        with:
+          name: release-packages
+          path: artifacts
+
+      - name: Extract release notes from CHANGELOG.md
+        env:
+          VERSION: ${{ needs.package.outputs.version }}
+        run: |
+          awk -v version="$VERSION" '
+            $0 ~ "^## \\[" version "\\]" { found = 1; next }
+            found && /^## \[/ { exit }
+            found { print }
+          ' CHANGELOG.md > release-notes.md
+          if [ ! -s release-notes.md ]; then echo "See [CHANGELOG.md](CHANGELOG.md)." > release-notes.md; fi
+          cat >> release-notes.md <<EOF
+
+          ## Packages
+
+          - NuGet: [AspNetDesktop $VERSION](https://www.nuget.org/packages/AspNetDesktop/$VERSION), [AspNetDesktop.Templates $VERSION](https://www.nuget.org/packages/AspNetDesktop.Templates/$VERSION)
+          - npm: [aspnetdesktop-client@$VERSION](https://www.npmjs.com/package/aspnetdesktop-client/v/$VERSION)
+          EOF
+
+      - uses: softprops/action-gh-release@v3
+        with:
+          name: v${{ needs.package.outputs.version }}
+          body_path: release-notes.md
+          generate_release_notes: true
+          prerelease: ${{ needs.package.outputs.prerelease == 'true' }}
+          files: |
+            artifacts/*.nupkg
+            artifacts/*.snupkg
+            artifacts/*.tgz

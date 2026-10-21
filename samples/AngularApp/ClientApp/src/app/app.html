@@ -1,0 +1,80 @@
+<main class="shell">
+  <header class="masthead">
+    <div class="mark" aria-hidden="true"></div>
+    <div>
+      <h1>AspNetDesktop <span class="plus">+</span> Angular</h1>
+      <p class="lede">
+        An ASP.NET Core backend running in-process. No Kestrel, no port: the UI is served from
+        <code>app://localhost</code> and the API answers on <code>ipc://localhost</code>.
+      </p>
+    </div>
+    <span class="badge">{{ platform }}</span>
+  </header>
+
+  <section class="grid">
+    <article class="card">
+      <header>
+        <h2>Metadata</h2>
+        <p class="route"><code>DesktopHttpClient</code> → <code>GET ipc://localhost/api/metadata</code> (minimal API)</p>
+      </header>
+      @if (metadata(); as meta) {
+        <dl class="facts">
+          <dt>Name</dt><dd>{{ meta.name }}</dd>
+          <dt>Version</dt><dd>{{ meta.version }}</dd>
+          <dt>Environment</dt><dd>{{ meta.environment }}</dd>
+          <dt>Runtime</dt><dd>{{ meta.runtime }}</dd>
+          <dt>OS</dt><dd>{{ meta.operatingSystem }}</dd>
+        </dl>
+      } @else if (metadataError(); as error) {
+        <p class="error">{{ error }}</p>
+      } @else {
+        <p class="muted">Loading…</p>
+      }
+    </article>
+
+    <article class="card">
+      <header>
+        <h2>Orders</h2>
+        <p class="route"><code>DesktopHttpClient</code> → <code>[ApiController] /api/orders</code> (MVC, validation, 201/204)</p>
+      </header>
+
+      <ul class="orders">
+        @for (order of orders(); track order.id) {
+          <li>
+            <span class="qty">{{ order.quantity }}×</span>
+            <span class="product">{{ order.product }}</span>
+            <button type="button" class="ghost" (click)="deleteOrder(order)" [attr.aria-label]="'Delete ' + order.product">✕</button>
+          </li>
+        } @empty {
+          <li class="muted">No orders yet.</li>
+        }
+      </ul>
+
+      <form class="order-form" (ngSubmit)="addOrder()">
+        <input name="product" [(ngModel)]="product" placeholder="Product" aria-label="Product" />
+        <input name="quantity" type="number" [(ngModel)]="quantity" min="1" max="99" aria-label="Quantity" />
+        <button type="submit">Add</button>
+      </form>
+      @for (message of orderErrors(); track message) {
+        <p class="error">{{ message }}</p>
+      }
+    </article>
+
+    <article class="card">
+      <header>
+        <h2>Real HTTP</h2>
+        <p class="route"><code>HttpClient</code> → <code>GET https://api.github.com/repos/dotnet/aspnetcore</code> (network)</p>
+      </header>
+      @if (repository(); as repo) {
+        <p class="repo"><a [href]="repo.html_url" target="_blank" rel="noopener">{{ repo.full_name }}</a></p>
+        <p>{{ repo.description }}</p>
+        <p class="stars">★ {{ repo.stargazers_count.toLocaleString() }}</p>
+        <p class="muted">Links to the web open in your browser, not in this window.</p>
+      } @else if (repositoryError(); as error) {
+        <p class="error">{{ error }}</p>
+      } @else {
+        <p class="muted">Loading…</p>
+      }
+    </article>
+  </section>
+</main>

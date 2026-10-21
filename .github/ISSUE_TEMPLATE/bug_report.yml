@@ -1,0 +1,59 @@
+name: Bug report
+description: Something doesn't work as documented.
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: Thanks for taking the time to report this! Security issues go through [private reporting](https://github.com/armanossiloko/aspnet-desktop/security/advisories/new) instead.
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: What did you do, what did you expect, and what happened instead?
+    validations:
+      required: true
+  - type: textarea
+    id: repro
+    attributes:
+      label: Minimal reproduction
+      description: Code, a repository link, or steps. `dotnet new aspnetdesktop-react` / `aspnetdesktop-angular` make a good starting point.
+    validations:
+      required: true
+  - type: dropdown
+    id: os
+    attributes:
+      label: Operating system / adapter
+      multiple: true
+      options:
+        - Windows (WebView2)
+        - macOS (WKWebView)
+        - Linux (WebKitGTK)
+        - Not platform-specific (Hosting, CreateClient)
+        - JavaScript client only
+    validations:
+      required: true
+  - type: input
+    id: versions
+    attributes:
+      label: Versions
+      description: AspNetDesktop, aspnetdesktop-client, .NET SDK, and the WebView version (WebView2 runtime, macOS, or WebKitGTK).
+      placeholder: AspNetDesktop 0.1.0, aspnetdesktop-client 0.1.0, .NET 10.0.100, WebView2 140.0
+    validations:
+      required: true
+  - type: dropdown
+    id: ui
+    attributes:
+      label: UI framework
+      options:
+        - Angular
+        - React
+        - Vue
+        - Svelte
+        - Vanilla JS
+        - Other
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs and errors
+      description: Console output, exception stack traces, or WebView dev tools errors.
+      render: shell

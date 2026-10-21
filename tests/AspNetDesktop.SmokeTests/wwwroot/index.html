@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>AspNetDesktop smoke test</title>
+    <style>
+      body { font: 14px/1.5 system-ui, sans-serif; margin: 2rem; }
+      li.pass::marker { content: '✔ '; color: green; }
+      li.fail::marker { content: '✘ '; color: crimson; }
+    </style>
+  </head>
+  <body>
+    <h1>AspNetDesktop smoke test</h1>
+    <ol id="results"></ol>
+    <script>
+      // Diagnostics if the module below never finishes (e.g. it fails to load on a WebView): report what we saw.
+      window.__smokeErrors = [];
+      addEventListener('error', (e) => __smokeErrors.push(`${e.message || e.type} @ ${e.filename || (e.target && e.target.src) || ''}`), true);
+      addEventListener('unhandledrejection', (e) => __smokeErrors.push(`unhandled rejection: ${e.reason}`));
+      setTimeout(() => {
+        if (window.__smokeReported) return;
+        const config = window.__ASPNETDESKTOP__ || null;
+        fetch('ipc://localhost/api/report', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'X-AspNetDesktop-Token': (config && config.token) || '' },
+          body: JSON.stringify({
+            userAgent: navigator.userAgent,
+            results: [{ name: 'page script did not complete', pass: false, detail: JSON.stringify({ origin: location.origin, config, errors: __smokeErrors }) }],
+          }),
+        }).catch(() => {});
+      }, 45000);
+    </script>
+    <script type="module">
+      import { createDesktopHttpClient, DesktopHttpError, REQUEST_TOKEN_HEADER } from './client/index.js';
+
+      const results = [];
+      const list = document.getElementById('results');
+      const record = (name, pass, detail = '') => {
+        results.push({ name, pass: !!pass, detail: String(detail) });
+        const item = document.createElement('li');
+        item.className = pass ? 'pass' : 'fail';
+        item.textContent = `${name}${detail ? ' — ' + detail : ''}`;
+        list.append(item);
+      };
+      const check = async (name, fn) => {
+        try {
+          const detail = await fn();
+          record(name, true, detail ?? '');
+        } catch (error) {
+          record(name, false, error?.stack || error);
+        }
+      };
+      const assert = (condition, message) => {
+        if (!condition) throw new Error(message);
+      };
+
+      const host = window.__ASPNETDESKTOP__;
+      const token = host?.token;
+      const desktop = createDesktopHttpClient();
+
+      await check('page origin is app://localhost', () => {
+        assert(location.origin === 'app://localhost', location.origin);
+        return location.origin;
+      });
+      const expected = await fetch('ipc://localhost/api/metadata', { headers: { [REQUEST_TOKEN_HEADER]: token } })
+        .then((r) => r.json())
+        .then((m) => m.platform)
+        .catch(() => undefined);
+
+      await check('bootstrap config injected', () => {
+        assert(host && host.ipcBase === 'ipc://localhost', JSON.stringify(host));
+        assert(host.platform === expected, `platform=${host.platform}, expected=${expected}`);
+        assert(typeof token === 'string' && token.length === 64, 'token missing');
+        assert(Object.isFrozen(host), 'config should be frozen');
+      });
+      await check('static asset over app://', async () => {
+        const response = await fetch('/client/index.js');
+        assert(response.ok, response.status);
+        return response.headers.get('content-type');
+      });
+      await check('raw fetch GET ipc:// (CORS + token)', async () => {
+        const response = await fetch('ipc://localhost/api/metadata', { headers: { [REQUEST_TOKEN_HEADER]: token } });
+        assert(response.status === 200, response.status);
+        const body = await response.json();
+        assert(body.name === 'smoke' && body.platform === host.platform, JSON.stringify(body));
+        return JSON.stringify(body);
+      });
+      await check('ipc:// without token is rejected', async () => {
+        const response = await fetch('ipc://localhost/api/metadata');
+        assert(response.status === 403, response.status);
+      });
+      await check('DesktopHttpClient.get', async () => {
+        const body = await desktop.get('/api/metadata');
+        assert(body.version === '1.0.0', JSON.stringify(body));
+      });
+      await check('DesktopHttpClient.post JSON (preflight) + Location header', async () => {
+        const response = await desktop.request('POST', '/api/orders', { body: { product: 'Tea', quantity: 7 } });
+        assert(response.status === 201, response.status);
+        assert(response.body.product === 'Tea' && response.body.id === 7, JSON.stringify(response.body));
+        const location = response.headers.get('Location');
+        assert(location && location.endsWith('/api/orders/7'), `Location=${location}`);
+        return location;
+      });
+      await check('DesktopHttpClient.put / delete', async () => {
+        const updated = await desktop.put('/api/orders/3', { product: 'Milk', quantity: 1 });
+        assert(updated.id === 3 && updated.product === 'Milk', JSON.stringify(updated));
+        const deleted = await desktop.delete('/api/orders/3');
+        assert(deleted === null, JSON.stringify(deleted));
+      });
+      await check('custom request header in, custom response header out', async () => {
+        const response = await desktop.request('GET', '/api/headers', { headers: { 'X-Echo': 'hi' } });
+        assert(response.body.echo === 'hi', JSON.stringify(response.body));
+        assert(response.headers.get('X-Smoke') === 'exposed', `X-Smoke=${response.headers.get('X-Smoke')}`);
+        return `Origin seen by server: ${response.body.origin}`;
+      });
+      await check('1 MB request body', async () => {
+        const payload = new Uint8Array(1024 * 1024).fill(7);
+        const body = await desktop.post('/api/size', payload, { headers: { 'Content-Type': 'application/octet-stream' } });
+        assert(body.length === payload.length, JSON.stringify(body));
+      });
+      await check('unknown API route is a 404 on ipc://, not index.html', async () => {
+        try {
+          await desktop.get('/api/missing');
+          throw new Error('expected an error');
+        } catch (error) {
+          assert(error instanceof DesktopHttpError && error.status === 404, error);
+        }
+      });
+      await check('model binding failure surfaces as 400 DesktopHttpError', async () => {
+        try {
+          await desktop.post('/api/orders', 'not json', { headers: { 'Content-Type': 'application/json' } });
+          throw new Error('expected an error');
+        } catch (error) {
+          assert(error instanceof DesktopHttpError && error.status === 400, error);
+        }
+      });
+      await check('relative fetch from app:// never reaches the API', async () => {
+        const response = await fetch('/api/metadata');
+        const type = response.headers.get('content-type') ?? '';
+        assert(type.startsWith('text/html'), type);
+        return type;
+      });
+      await check('relative POST from app:// is 405', async () => {
+        const response = await fetch('/api/orders', { method: 'POST', body: '{}' });
+        assert(response.status === 405, response.status);
+      });
+      await check('real HTTP fetch is untouched by the framework', async () => {
+        assert(window.fetch.toString().includes('[native code]'), 'fetch was patched');
+      });
+
+      window.__smokeReported = true;
+      await fetch('ipc://localhost/api/report', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', [REQUEST_TOKEN_HEADER]: token },
+        body: JSON.stringify({ userAgent: navigator.userAgent, results }),
+      });
+    </script>
+  </body>
+</html>

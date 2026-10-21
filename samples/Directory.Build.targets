@@ -1,0 +1,31 @@
+<Project>
+  <!--
+    Repository-only wiring for the samples. Not part of the dotnet new templates built from them:
+    - build against the source projects instead of the AspNetDesktop package
+    - use the root npm workspace, which links aspnetdesktop-client from src/client
+  -->
+  <ItemGroup>
+    <PackageReference Remove="AspNetDesktop" />
+    <ProjectReference Include="$(AspNetDesktopRepoRoot)src/AspNetDesktop/AspNetDesktop.csproj" />
+  </ItemGroup>
+
+  <!-- A package reference would bring this in through buildTransitive; a project reference does not. -->
+  <Import Project="$(AspNetDesktopRepoRoot)src/AspNetDesktop.Windows/buildTransitive/AspNetDesktop.Windows.targets" Condition="'$(TargetFramework)' == 'net10.0-windows'" />
+
+  <ItemGroup>
+    <_WorkspaceClientSource Include="$(AspNetDesktopRepoRoot)src/client/src/**/*.ts;$(AspNetDesktopRepoRoot)src/client/package.json;$(AspNetDesktopRepoRoot)src/client/tsconfig*.json" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <ClientAppSkipInstall>true</ClientAppSkipInstall>
+    <BuildClientAppDependsOn>$(BuildClientAppDependsOn);BuildWorkspaceClientPackage</BuildClientAppDependsOn>
+  </PropertyGroup>
+
+  <!-- Incremental, so parallel sample builds (or an earlier `npm run build:client`) don't rebuild it. -->
+  <Target Name="BuildWorkspaceClientPackage"
+          Inputs="@(_WorkspaceClientSource)"
+          Outputs="$(AspNetDesktopRepoRoot)src/client/dist/index.js;$(AspNetDesktopRepoRoot)src/client/dist/angular/index.js">
+    <Exec Command="npm ci" WorkingDirectory="$(AspNetDesktopRepoRoot)" Condition="!Exists('$(AspNetDesktopRepoRoot)node_modules')" />
+    <Exec Command="npm run build -w aspnetdesktop-client" WorkingDirectory="$(AspNetDesktopRepoRoot)" />
+  </Target>
+</Project>

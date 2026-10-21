@@ -1,0 +1,12 @@
+<Project>
+  <!--
+    Microsoft.Web.WebView2 always references its WPF control assembly, which pulls in WindowsBase 5.0 and
+    raises MSB3277 in WinForms-only projects. AspNetDesktop only uses the WinForms control, so drop the WPF
+    reference unless the consuming project opts into WPF itself.
+  -->
+  <Target Name="AspNetDesktopRemoveWebView2Wpf" BeforeTargets="ResolveAssemblyReferences" Condition="'$(UseWPF)' != 'true'">
+    <ItemGroup>
+      <Reference Remove="@(Reference)" Condition="'%(Filename)' == 'Microsoft.Web.WebView2.Wpf'" />
+    </ItemGroup>
+  </Target>
+</Project>

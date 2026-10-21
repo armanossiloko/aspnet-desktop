@@ -1,0 +1,45 @@
+{
+  "$schema": "http://json.schemastore.org/template",
+  "author": "Arman Ossi Loko",
+  "classifications": ["Desktop", "Web", "ASP.NET Core", "React"],
+  "identity": "AspNetDesktop.React",
+  "groupIdentity": "AspNetDesktop.React",
+  "name": "AspNetDesktop app (React)",
+  "description": "A desktop app with an in-process ASP.NET Core backend (no port) and a React UI, hosted in the system WebView.",
+  "shortName": "aspnetdesktop-react",
+  "sourceName": "ReactApp",
+  "preferNameDirectory": true,
+  "tags": {
+    "language": "C#",
+    "type": "project"
+  },
+  "sources": [
+    {
+      "modifiers": [
+        {
+          "exclude": [
+            ".template.config/**",
+            "bin/**",
+            "obj/**",
+            "wwwroot/**",
+            "ClientApp/node_modules/**",
+            "ClientApp/dist/**"
+          ]
+        }
+      ]
+    }
+  ],
+  "primaryOutputs": [
+    { "path": "ReactApp.csproj" }
+  ],
+  "postActions": [
+    {
+      "description": "Next steps",
+      "manualInstructions": [
+        { "text": "Debug with hot reload: run 'npm install' and 'npm start' in ClientApp (dev server on :5173), then 'dotnet run'. Release: 'dotnet run -c Release' builds the UI into wwwroot and serves it from app://." }
+      ],
+      "actionId": "AC1156F7-BB77-4DB8-B28F-24EEBCCA1E5C",
+      "continueOnError": true
+    }
+  ]
+}
