@@ -21,11 +21,12 @@ To use your own adapter, register an `IDesktopPlatform` in DI or call `app.RunDe
 
 ## macOS: WKWebView (`net10.0-macos`)
 
+- **Requirements**: macOS 14 or later.
 - **Build**: needs the macOS workload (`dotnet workload install macos`) and, to build app bundles, the Xcode version that workload expects.
 - **Window**: `NSWindow` with an app menu (Hide, Quit) and an Edit menu so copy/paste/undo shortcuts reach the WebView. `RunDesktop()` must be called on the main thread (the default for `Main`).
 - **Schemes**: one `WKURLSchemeHandler` serves `app://` and `ipc://`; request bodies are read from `HTTPBody` or `HTTPBodyStream`.
 - **Quit**: Cmd+Q and closing the window stop the ASP.NET Core host gracefully instead of `exit()`-ing.
-- **Dev tools**: in Development, the Web Inspector is enabled (`isInspectable` on macOS 13.3+). Right-click → Inspect Element.
+- **Dev tools**: in Development, the Web Inspector is enabled (`isInspectable`). Right-click → Inspect Element.
 
 ## Linux: WebKitGTK 6 (`net10.0`)
 

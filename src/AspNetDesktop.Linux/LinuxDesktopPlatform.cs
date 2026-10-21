@@ -162,25 +162,7 @@ public sealed partial class LinuxDesktopPlatform : IDesktopPlatform
     {
         HeaderDictionary headers = ReadHeaders(request.GetHttpHeaders());
 
-        MemoryStream? body = null;
-        Gio.InputStream? input = request.GetHttpBody();
-        if (input is not null)
-        {
-            body = new MemoryStream();
-            byte[] buffer = new byte[16 * 1024];
-            while (true)
-            {
-                int read = (int)input.Read(buffer, null);
-                if (read <= 0)
-                {
-                    break;
-                }
-
-                body.Write(buffer, 0, read);
-            }
-
-            body.Position = 0;
-        }
+        MemoryStream? body = ReadBody(request);
 
         return new DesktopHttpRequest
         {
@@ -236,7 +218,7 @@ public sealed partial class LinuxDesktopPlatform : IDesktopPlatform
         GCHandle target = GCHandle.Alloc(headers);
         try
         {
-            LibSoup.MessageHeadersForeach(source.Handle.DangerousGetHandle(), &CollectHeader, GCHandle.ToIntPtr(target));
+            Native.MessageHeadersForeach(source.Handle.DangerousGetHandle(), &CollectHeader, GCHandle.ToIntPtr(target));
         }
         finally
         {
@@ -244,6 +226,49 @@ public sealed partial class LinuxDesktopPlatform : IDesktopPlatform
         }
 
         return headers;
+    }
+
+    private static unsafe MemoryStream? ReadBody(WebKit.URISchemeRequest request)
+    {
+        // GirCore's GetHttpBody throws instead of returning null for body-less requests, so call WebKit directly.
+        IntPtr stream = Native.UriSchemeRequestGetHttpBody(request.Handle.DangerousGetHandle());
+        if (stream == IntPtr.Zero)
+        {
+            return null;
+        }
+
+        try
+        {
+            MemoryStream body = new();
+            byte[] buffer = new byte[16 * 1024];
+            fixed (byte* bufferPointer = buffer)
+            {
+                while (true)
+                {
+                    IntPtr error = IntPtr.Zero;
+                    nint read = Native.InputStreamRead(stream, bufferPointer, (nuint)buffer.Length, IntPtr.Zero, &error);
+                    if (read < 0)
+                    {
+                        Native.ErrorFree(error);
+                        throw new IOException("Reading the WebKit request body failed.");
+                    }
+
+                    if (read == 0)
+                    {
+                        break;
+                    }
+
+                    body.Write(buffer, 0, (int)read);
+                }
+            }
+
+            body.Position = 0;
+            return body;
+        }
+        finally
+        {
+            Native.ObjectUnref(stream);
+        }
     }
 
     [UnmanagedCallersOnly]
@@ -329,13 +354,27 @@ public sealed partial class LinuxDesktopPlatform : IDesktopPlatform
         return "dev.aspnetdesktop." + segment;
     }
 
-    private static unsafe partial class LibSoup
+    /// <summary>Direct calls for the few APIs GirCore 0.8 binds incorrectly.</summary>
+    private static unsafe partial class Native
     {
         [LibraryImport("libsoup-3.0.so.0", EntryPoint = "soup_message_headers_foreach")]
         public static partial void MessageHeadersForeach(
             IntPtr headers,
             delegate* unmanaged<IntPtr, IntPtr, IntPtr, void> callback,
             IntPtr userData);
+
+        /// <remarks>Returns a new reference (transfer full), or null when the request has no body.</remarks>
+        [LibraryImport("libwebkitgtk-6.0.so.4", EntryPoint = "webkit_uri_scheme_request_get_http_body")]
+        public static partial IntPtr UriSchemeRequestGetHttpBody(IntPtr request);
+
+        [LibraryImport("libgio-2.0.so.0", EntryPoint = "g_input_stream_read")]
+        public static partial nint InputStreamRead(IntPtr stream, byte* buffer, nuint count, IntPtr cancellable, IntPtr* error);
+
+        [LibraryImport("libgobject-2.0.so.0", EntryPoint = "g_object_unref")]
+        public static partial void ObjectUnref(IntPtr instance);
+
+        [LibraryImport("libglib-2.0.so.0", EntryPoint = "g_error_free")]
+        public static partial void ErrorFree(IntPtr error);
     }
 
     [LoggerMessage(Level = LogLevel.Error, Message = "WebView request {Uri} failed.")]

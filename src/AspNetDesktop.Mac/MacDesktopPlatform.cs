@@ -71,7 +71,7 @@ public sealed partial class MacDesktopPlatform : IDesktopPlatform
             AutoresizingMask = NSViewResizingMask.WidthSizable | NSViewResizingMask.HeightSizable,
         };
 
-        if (settings.DevToolsEnabled && OperatingSystem.IsMacOSVersionAtLeast(13, 3))
+        if (settings.DevToolsEnabled)
         {
             webView.Inspectable = true;
         }
@@ -97,14 +97,7 @@ public sealed partial class MacDesktopPlatform : IDesktopPlatform
 
         webView.LoadRequest(new NSUrlRequest(new NSUrl(settings.StartUrl.AbsoluteUri)));
         window.MakeKeyAndOrderFront(null);
-        if (OperatingSystem.IsMacOSVersionAtLeast(14))
-        {
-            application.Activate();
-        }
-        else
-        {
-            application.ActivateIgnoringOtherApps(true);
-        }
+        application.Activate();
 
         // Returns when WindowDelegate stops the loop; terminate: is intercepted so the host can shut down cleanly.
         application.Run();
