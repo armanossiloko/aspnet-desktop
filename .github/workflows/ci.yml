@@ -103,10 +103,11 @@ jobs:
           - name: Linux
             os: ubuntu-24.04
             run: xvfb-run -a dotnet tests/AspNetDesktop.SmokeTests/bin/Release/net10.0/AspNetDesktop.SmokeTests.dll
-          # Run the executable inside the .app bundle: `dotnet run` would hand the bundle to `open` and not wait.
+          # Run the executable inside the final (universal) .app bundle: `dotnet run` would hand the bundle to `open`
+          # and not wait, and the per-RID bundles under osx-*/ are incomplete intermediates.
           - name: macOS
             os: xcode-27
-            run: "\"$(find tests/AspNetDesktop.SmokeTests/bin/Release -path '*.app/Contents/MacOS/AspNetDesktop.SmokeTests' -type f | head -n 1)\""
+            run: "\"$(find tests/AspNetDesktop.SmokeTests/bin/Release/net10.0-macos -maxdepth 1 -name '*.app' | head -n 1)/Contents/MacOS/AspNetDesktop.SmokeTests\""
     steps:
       - uses: actions/checkout@v7
         with:

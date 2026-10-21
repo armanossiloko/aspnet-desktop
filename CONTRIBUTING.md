@@ -37,7 +37,7 @@ xvfb-run -a dotnet run --project tests/AspNetDesktop.SmokeTests # Linux without 
 
 # macOS: `dotnet run` hands app bundles to `open` and doesn't wait, so run the bundle's executable:
 dotnet build tests/AspNetDesktop.SmokeTests
-"$(find tests/AspNetDesktop.SmokeTests/bin/Debug -path '*.app/Contents/MacOS/AspNetDesktop.SmokeTests' -type f | head -n 1)"
+"$(find tests/AspNetDesktop.SmokeTests/bin/Debug/net10.0-macos -maxdepth 2 -name '*.app' | head -n 1)/Contents/MacOS/AspNetDesktop.SmokeTests"
 ```
 
 If you change an adapter, run the smoke test on that OS.
