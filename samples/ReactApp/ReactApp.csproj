@@ -11,6 +11,9 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <RootNamespace>ReactApp</RootNamespace>
+    <!-- macOS bundle identity (also used as the app's data folder name there). -->
+    <ApplicationId>com.example.ReactApp</ApplicationId>
+    <ApplicationTitle>ReactApp</ApplicationTitle>
     <IsPackable>false</IsPackable>
   </PropertyGroup>
 
