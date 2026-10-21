@@ -18,5 +18,9 @@ First release.
 - `aspnetdesktop-client` npm package: `createDesktopHttpClient()` for vanilla/React and `provideDesktopHttpClient()` / `DesktopHttpClient` for Angular.
 - `AspNetDesktop.Templates`: `dotnet new aspnetdesktop-angular` and `dotnet new aspnetdesktop-react`.
 
+### Requirements
+
+- .NET 10. Windows: the WebView2 Runtime. macOS: 14 or later (building needs the `macos` workload and its matching Xcode). Linux: GTK 4 and WebKitGTK 6.0 (2.40+).
+
 [Unreleased]: https://github.com/armanossiloko/aspnet-desktop/compare/v0.1.0...HEAD
 [0.1.0]: https://github.com/armanossiloko/aspnet-desktop/releases/tag/v0.1.0
