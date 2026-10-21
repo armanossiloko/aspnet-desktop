@@ -158,6 +158,10 @@ jobs:
           # No accessibility bus on headless runners.
           GTK_A11Y: none
 
+      - name: Show the app bundle layout
+        if: failure() && runner.os == 'macOS'
+        run: find tests/AspNetDesktop.SmokeTests/bin/Release -path '*.app/*' -not -name '*.dll' -not -name '*.dylib' | head -n 100
+
   pack:
     name: Pack & template check
     runs-on: windows-latest
