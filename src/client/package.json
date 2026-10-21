@@ -1,0 +1,83 @@
+{
+  "name": "aspnetdesktop-client",
+  "version": "0.1.0",
+  "description": "DesktopHttpClient: isolated, HTTP-shaped calls from the WebView UI to the in-process ASP.NET Core API over ipc://localhost. Never touches the global fetch or Angular's HttpClient.",
+  "license": "MIT",
+  "author": "Arman Ossi Loko",
+  "homepage": "https://github.com/armanossiloko/aspnet-desktop/tree/main/src/client#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/armanossiloko/aspnet-desktop.git",
+    "directory": "src/client"
+  },
+  "bugs": {
+    "url": "https://github.com/armanossiloko/aspnet-desktop/issues"
+  },
+  "type": "module",
+  "sideEffects": false,
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./angular": {
+      "types": "./dist/angular/index.d.ts",
+      "default": "./dist/angular/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist",
+    "!dist/**/*.tsbuildinfo",
+    "README.md",
+    "LICENSE"
+  ],
+  "keywords": [
+    "aspnetcore",
+    "desktop",
+    "webview",
+    "ipc",
+    "angular",
+    "react",
+    "httpclient"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run",
+    "prepack": "npm run build"
+  },
+  "peerDependencies": {
+    "@angular/common": ">=19.0.0",
+    "@angular/core": ">=19.0.0",
+    "rxjs": "^7.4.0"
+  },
+  "peerDependenciesMeta": {
+    "@angular/common": {
+      "optional": true
+    },
+    "@angular/core": {
+      "optional": true
+    },
+    "rxjs": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@angular/common": "^22.2.0",
+    "@angular/compiler": "^22.2.0",
+    "@angular/core": "^22.2.0",
+    "rxjs": "~7.8.0",
+    "typescript": "~6.0.0",
+    "vitest": "^4.0.8"
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

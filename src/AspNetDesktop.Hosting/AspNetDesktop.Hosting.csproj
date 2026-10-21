@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>AspNetDesktop.Hosting</RootNamespace>
+    <Description>In-process ASP.NET Core server for desktop apps. Hosts the full ASP.NET Core pipeline behind the app:// and ipc:// WebView schemes without binding a TCP port.</Description>
+    <IsTrimmable>true</IsTrimmable>
+    <EnableConfigurationBindingGenerator>true</EnableConfigurationBindingGenerator>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="AspNetDesktop.Hosting.Tests" />
+  </ItemGroup>
+
+</Project>

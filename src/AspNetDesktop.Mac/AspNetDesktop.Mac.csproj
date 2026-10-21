@@ -1,0 +1,32 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <Import Project="..\MacWorkload.props" />
+
+  <PropertyGroup>
+    <TargetFramework>net10.0-macos</TargetFramework>
+    <SupportedOSPlatformVersion>12.0</SupportedOSPlatformVersion>
+    <RootNamespace>AspNetDesktop.Mac</RootNamespace>
+    <Description>macOS adapter for AspNetDesktop: an NSWindow hosting WKWebView with the app:// and ipc:// schemes wired to the in-process ASP.NET Core server through WKURLSchemeHandler.</Description>
+  </PropertyGroup>
+
+  <!-- Without the macOS workload, build an empty placeholder so solution builds keep working. -->
+  <PropertyGroup Condition="'$(AspNetDesktopBuildMac)' != 'true'">
+    <TargetFramework>net10.0</TargetFramework>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    <IsPackable>false</IsPackable>
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\AspNetDesktop.Hosting\AspNetDesktop.Hosting.csproj" />
+  </ItemGroup>
+
+  <Target Name="AspNetDesktopWarnMacSkipped" BeforeTargets="Build" Condition="'$(AspNetDesktopBuildMac)' != 'true'">
+    <Message Importance="high" Text="AspNetDesktop.Mac skipped: the 'macos' workload is not installed (dotnet workload install macos)." />
+  </Target>
+
+</Project>

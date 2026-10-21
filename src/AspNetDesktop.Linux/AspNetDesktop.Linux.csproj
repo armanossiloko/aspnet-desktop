@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>AspNetDesktop.Linux</RootNamespace>
+    <Description>Linux adapter for AspNetDesktop: a GTK 4 window hosting WebKitGTK 6 (via GirCore) with the app:// and ipc:// schemes wired to the in-process ASP.NET Core server.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\AspNetDesktop.Hosting\AspNetDesktop.Hosting.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="GirCore.Gtk-4.0" />
+    <PackageReference Include="GirCore.WebKit-6.0" />
+  </ItemGroup>
+
+</Project>

@@ -1,0 +1,7 @@
+bin/
+obj/
+wwwroot/
+ClientApp/node_modules/
+ClientApp/dist/
+ClientApp/.angular/
+*.user

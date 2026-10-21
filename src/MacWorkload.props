@@ -1,0 +1,11 @@
+<Project>
+  <!--
+    net10.0-macos needs the 'macos' workload (dotnet workload install macos). Detect it so the repository builds
+    everywhere: without the workload the macOS adapter is skipped. Pass -p:AspNetDesktopBuildMac=true|false to force it.
+    Imported from project bodies, after the SDK has defined NetCoreTargetingPackRoot.
+  -->
+  <PropertyGroup Condition="'$(AspNetDesktopBuildMac)' == ''">
+    <AspNetDesktopBuildMac>false</AspNetDesktopBuildMac>
+    <AspNetDesktopBuildMac Condition="Exists('$(NetCoreTargetingPackRoot)') and $([System.IO.Directory]::GetDirectories('$(NetCoreTargetingPackRoot)', 'Microsoft.macOS.Sdk.net10.0_*').Length) &gt; 0">true</AspNetDesktopBuildMac>
+  </PropertyGroup>
+</Project>

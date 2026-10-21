@@ -1,0 +1,71 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    dotnet new templates built from the samples (samples/*/.template.config). At pack time the samples are copied
+    without build output and with the AspNetDesktop / aspnetdesktop-client versions set to this package's version.
+  -->
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <PackageId>AspNetDesktop.Templates</PackageId>
+    <PackageType>Template</PackageType>
+    <Description>dotnet new templates for AspNetDesktop: desktop apps with an in-process ASP.NET Core backend and an Angular (aspnetdesktop-angular) or React (aspnetdesktop-react) UI.</Description>
+    <PackageTags>$(PackageTags);dotnet-new;templates</PackageTags>
+    <IncludeBuildOutput>false</IncludeBuildOutput>
+    <IncludeSymbols>false</IncludeSymbols>
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+    <EnableDefaultItems>false</EnableDefaultItems>
+    <NoDefaultExcludes>true</NoDefaultExcludes>
+    <EnablePackageValidation>false</EnablePackageValidation>
+    <SuppressDependenciesWhenPacking>true</SuppressDependenciesWhenPacking>
+    <!-- No lib/ folder is expected in a template package. -->
+    <NoWarn>$(NoWarn);NU5128</NoWarn>
+    <TemplatesStagingDir>$(BaseIntermediateOutputPath)templates/</TemplatesStagingDir>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <TemplateSource Include="Angular" SourceDir="$(AspNetDesktopRepoRoot)samples/AngularApp/" />
+    <TemplateSource Include="React" SourceDir="$(AspNetDesktopRepoRoot)samples/ReactApp/" />
+  </ItemGroup>
+
+  <UsingTask TaskName="StageTemplateFile" TaskFactory="RoslynCodeTaskFactory" AssemblyFile="$(MSBuildToolsPath)/Microsoft.Build.Tasks.Core.dll">
+    <ParameterGroup>
+      <Source ParameterType="System.String" Required="true" />
+      <Destination ParameterType="System.String" Required="true" />
+      <Version ParameterType="System.String" Required="true" />
+    </ParameterGroup>
+    <Task>
+      <Using Namespace="System.IO" />
+      <Using Namespace="System.Text.RegularExpressions" />
+      <Code Type="Fragment" Language="cs"><![CDATA[
+        Directory.CreateDirectory(Path.GetDirectoryName(Destination));
+        string name = Path.GetFileName(Source);
+        if (name.EndsWith(".csproj") || name == "package.json")
+        {
+            string text = File.ReadAllText(Source);
+            text = Regex.Replace(text, "(<PackageReference Include=\"AspNetDesktop\" Version=\")[^\"]*(\")", "${1}" + Version + "${2}");
+            text = Regex.Replace(text, "(\"aspnetdesktop-client\": \")[^\"]*(\")", "${1}^" + Version + "${2}");
+            File.WriteAllText(Destination, text);
+        }
+        else
+        {
+            File.Copy(Source, Destination, overwrite: true);
+        }
+      ]]></Code>
+    </Task>
+  </UsingTask>
+
+  <Target Name="StageTemplates" BeforeTargets="_GetPackageFiles" DependsOnTargets="MinVer">
+    <ItemGroup>
+      <_TemplateFile Include="%(TemplateSource.SourceDir)**/*" Exclude="%(TemplateSource.SourceDir)bin/**;%(TemplateSource.SourceDir)obj/**;%(TemplateSource.SourceDir)wwwroot/**;%(TemplateSource.SourceDir)ClientApp/node_modules/**;%(TemplateSource.SourceDir)ClientApp/dist/**;%(TemplateSource.SourceDir)ClientApp/.angular/**;%(TemplateSource.SourceDir)**/*.user" TemplateName="%(TemplateSource.Identity)" />
+    </ItemGroup>
+
+    <RemoveDir Directories="$(TemplatesStagingDir)" />
+    <StageTemplateFile Source="%(_TemplateFile.FullPath)" Destination="$(TemplatesStagingDir)%(_TemplateFile.TemplateName)/%(_TemplateFile.RecursiveDir)%(_TemplateFile.Filename)%(_TemplateFile.Extension)" Version="$(PackageVersion)" />
+
+    <ItemGroup>
+      <_StagedTemplateFile Include="$(TemplatesStagingDir)**/*" />
+      <None Include="@(_StagedTemplateFile)" Pack="true" PackagePath="content/%(RecursiveDir)%(Filename)%(Extension)" />
+    </ItemGroup>
+  </Target>
+
+</Project>

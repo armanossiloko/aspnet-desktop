@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <UseWindowsForms>true</UseWindowsForms>
+    <RootNamespace>AspNetDesktop.Windows</RootNamespace>
+    <Description>Windows adapter for AspNetDesktop: a WinForms window hosting WebView2 with the app:// and ipc:// schemes wired to the in-process ASP.NET Core server.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\AspNetDesktop.Hosting\AspNetDesktop.Hosting.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- WebView2 wires its managed assemblies through MSBuild targets, so consumers need its build assets too. -->
+    <PackageReference Include="Microsoft.Web.WebView2" PrivateAssets="none" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="buildTransitive\AspNetDesktop.Windows.targets" Pack="true" PackagePath="buildTransitive\" />
+  </ItemGroup>
+
+  <Import Project="buildTransitive\AspNetDesktop.Windows.targets" />
+
+</Project>

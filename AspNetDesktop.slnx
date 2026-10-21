@@ -1,0 +1,26 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/AspNetDesktop.Hosting/AspNetDesktop.Hosting.csproj" />
+    <Project Path="src/AspNetDesktop.Windows/AspNetDesktop.Windows.csproj" />
+    <Project Path="src/AspNetDesktop.Linux/AspNetDesktop.Linux.csproj" />
+    <Project Path="src/AspNetDesktop.Mac/AspNetDesktop.Mac.csproj" />
+    <Project Path="src/AspNetDesktop/AspNetDesktop.csproj" />
+  </Folder>
+  <Folder Name="/samples/">
+    <Project Path="samples/AngularApp/AngularApp.csproj" />
+    <Project Path="samples/ReactApp/ReactApp.csproj" />
+  </Folder>
+  <Folder Name="/templates/">
+    <Project Path="templates/AspNetDesktop.Templates/AspNetDesktop.Templates.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/AspNetDesktop.Hosting.Tests/AspNetDesktop.Hosting.Tests.csproj" />
+    <Project Path="tests/AspNetDesktop.SmokeTests/AspNetDesktop.SmokeTests.csproj" />
+  </Folder>
+  <Folder Name="/Solution Items/">
+    <File Path="Directory.Build.props" />
+    <File Path="Directory.Packages.props" />
+    <File Path="global.json" />
+    <File Path="README.md" />
+  </Folder>
+</Solution>
