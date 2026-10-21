@@ -132,6 +132,8 @@ jobs:
           # Software rendering for headless runners without a GPU.
           LIBGL_ALWAYS_SOFTWARE: 1
           WEBKIT_DISABLE_DMABUF_RENDERER: 1
+          # No accessibility bus on headless runners.
+          GTK_A11Y: none
 
   pack:
     name: Pack & template check
