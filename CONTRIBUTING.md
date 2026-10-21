@@ -32,8 +32,12 @@ dotnet test --solution AspNetDesktop.slnx    # Hosting tests: no WebView needed
 
 ```bash
 npm run build:client
-dotnet run --project tests/AspNetDesktop.SmokeTests            # Windows / macOS
+dotnet run --project tests/AspNetDesktop.SmokeTests            # Windows, or Linux with a display
 xvfb-run -a dotnet run --project tests/AspNetDesktop.SmokeTests # Linux without a display
+
+# macOS: `dotnet run` hands app bundles to `open` and doesn't wait, so run the bundle's executable:
+dotnet build tests/AspNetDesktop.SmokeTests
+"$(find tests/AspNetDesktop.SmokeTests/bin/Debug -path '*.app/Contents/MacOS/AspNetDesktop.SmokeTests' -type f | head -n 1)"
 ```
 
 If you change an adapter, run the smoke test on that OS.
