@@ -19,6 +19,9 @@ env:
   DOTNET_CLI_TELEMETRY_OPTOUT: true
   DOTNET_SKIP_FIRST_TIME_EXPERIENCE: true
   NUGET_XMLDOC_MODE: skip
+  # The latest macOS workload targets a newer Xcode than the GA macOS runner image ships; build with the runner's
+  # Xcode anyway. The smoke test proves the resulting app runs.
+  ValidateXcodeVersion: false
 
 jobs:
   client:
