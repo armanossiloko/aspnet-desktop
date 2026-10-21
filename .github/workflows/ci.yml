@@ -19,9 +19,6 @@ env:
   DOTNET_CLI_TELEMETRY_OPTOUT: true
   DOTNET_SKIP_FIRST_TIME_EXPERIENCE: true
   NUGET_XMLDOC_MODE: skip
-  # The latest macOS workload targets a newer Xcode than the GA macOS runner image ships; build with the runner's
-  # Xcode anyway. The smoke test proves the resulting app runs.
-  ValidateXcodeVersion: false
 
 jobs:
   client:
@@ -47,12 +44,19 @@ jobs:
         run: npm pack -w aspnetdesktop-client --dry-run
 
   build:
-    name: Build & test (${{ matrix.os }})
+    name: Build & test (${{ matrix.name }})
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
-        os: [windows-latest, ubuntu-24.04, macos-26]
+        include:
+          - name: Windows
+            os: windows-latest
+          - name: Linux
+            os: ubuntu-24.04
+          # The macOS workload needs the Xcode version it was built against (27.1), which ships on this image.
+          - name: macOS
+            os: xcode-27
     steps:
       - uses: actions/checkout@v7
         with:
@@ -65,6 +69,11 @@ jobs:
       - name: Install macOS workload
         if: runner.os != 'Linux'
         run: dotnet workload install macos
+
+      - uses: maxim-lobanov/setup-xcode@v1
+        if: runner.os == 'macOS'
+        with:
+          xcode-version: '27.1'
 
       - uses: actions/setup-node@v7
         with:
@@ -81,18 +90,21 @@ jobs:
         run: dotnet test --solution AspNetDesktop.slnx -c Release --no-build
 
   smoke:
-    name: WebView smoke test (${{ matrix.os }})
+    name: WebView smoke test (${{ matrix.name }})
     runs-on: ${{ matrix.os }}
     timeout-minutes: 20
     strategy:
       fail-fast: false
       matrix:
         include:
-          - os: windows-latest
+          - name: Windows
+            os: windows-latest
             run: dotnet run --project tests/AspNetDesktop.SmokeTests -c Release --no-build
-          - os: ubuntu-24.04
+          - name: Linux
+            os: ubuntu-24.04
             run: xvfb-run -a dotnet run --project tests/AspNetDesktop.SmokeTests -c Release --no-build
-          - os: macos-26
+          - name: macOS
+            os: xcode-27
             run: dotnet run --project tests/AspNetDesktop.SmokeTests -c Release --no-build
     steps:
       - uses: actions/checkout@v7
@@ -106,6 +118,11 @@ jobs:
       - name: Install macOS workload
         if: runner.os == 'macOS'
         run: dotnet workload install macos
+
+      - uses: maxim-lobanov/setup-xcode@v1
+        if: runner.os == 'macOS'
+        with:
+          xcode-version: '27.1'
 
       - name: Install GTK 4 and WebKitGTK 6
         if: runner.os == 'Linux'
