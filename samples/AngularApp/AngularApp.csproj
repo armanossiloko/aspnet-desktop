@@ -11,6 +11,9 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <RootNamespace>AngularApp</RootNamespace>
+    <!-- macOS bundle identity (also used as the app's data folder name there). -->
+    <ApplicationId>com.example.AngularApp</ApplicationId>
+    <ApplicationTitle>AngularApp</ApplicationTitle>
     <IsPackable>false</IsPackable>
   </PropertyGroup>
 
