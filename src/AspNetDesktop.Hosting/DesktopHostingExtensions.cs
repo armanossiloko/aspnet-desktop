@@ -56,7 +56,8 @@ public static class DesktopHostingExtensions
     }
 
     // Desktop apps are often started with a working directory other than the install folder, which leaves the
-    // default content-root-relative wwwroot empty. Fall back to the wwwroot shipped next to the executable.
+    // default content-root-relative wwwroot empty. Fall back to the wwwroot shipped with the executable: next to it,
+    // or in Contents/Resources of a macOS app bundle (whose assemblies live in Contents/MonoBundle).
     private static void UseAppBaseWebRootWhenMissing(IWebHostEnvironment environment)
     {
         if (!string.IsNullOrEmpty(environment.WebRootPath) && Directory.Exists(environment.WebRootPath))
@@ -64,11 +65,20 @@ public static class DesktopHostingExtensions
             return;
         }
 
-        string candidate = Path.Combine(AppContext.BaseDirectory, "wwwroot");
-        if (Directory.Exists(candidate))
+        string[] candidates =
+        [
+            Path.Combine(AppContext.BaseDirectory, "wwwroot"),
+            Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "Resources", "wwwroot")),
+        ];
+
+        foreach (string candidate in candidates)
         {
-            environment.WebRootPath = candidate;
-            environment.WebRootFileProvider = new PhysicalFileProvider(candidate);
+            if (Directory.Exists(candidate))
+            {
+                environment.WebRootPath = candidate;
+                environment.WebRootFileProvider = new PhysicalFileProvider(candidate);
+                return;
+            }
         }
     }
 }
