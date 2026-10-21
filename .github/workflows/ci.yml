@@ -99,13 +99,14 @@ jobs:
         include:
           - name: Windows
             os: windows-latest
-            run: dotnet run --project tests/AspNetDesktop.SmokeTests -c Release --no-build
+            run: tests/AspNetDesktop.SmokeTests/bin/Release/net10.0-windows/AspNetDesktop.SmokeTests.exe
           - name: Linux
             os: ubuntu-24.04
-            run: xvfb-run -a dotnet run --project tests/AspNetDesktop.SmokeTests -c Release --no-build
+            run: xvfb-run -a dotnet tests/AspNetDesktop.SmokeTests/bin/Release/net10.0/AspNetDesktop.SmokeTests.dll
+          # Run the executable inside the .app bundle: `dotnet run` would hand the bundle to `open` and not wait.
           - name: macOS
             os: xcode-27
-            run: dotnet run --project tests/AspNetDesktop.SmokeTests -c Release --no-build
+            run: "\"$(find tests/AspNetDesktop.SmokeTests/bin/Release -path '*.app/Contents/MacOS/AspNetDesktop.SmokeTests' -type f | head -n 1)\""
     steps:
       - uses: actions/checkout@v7
         with:
@@ -144,7 +145,12 @@ jobs:
         run: dotnet build tests/AspNetDesktop.SmokeTests -c Release
 
       - name: Run smoke test
-        run: ${{ matrix.run }}
+        shell: bash
+        run: |
+          set -o pipefail
+          ${{ matrix.run }} 2>&1 | tee smoke.log
+          # Guard against launchers that return early: the app prints this line only after the WebView reported back.
+          grep -q "checks passed" smoke.log
         env:
           # Software rendering for headless runners without a GPU.
           LIBGL_ALWAYS_SOFTWARE: 1
