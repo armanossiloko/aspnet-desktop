@@ -8,6 +8,8 @@
     <OutputType>WinExe</OutputType>
     <OutputType Condition="'$(TargetFramework)' != 'net10.0-windows'">Exe</OutputType>
     <SupportedOSPlatformVersion Condition="'$(TargetFramework)' == 'net10.0-macos'">14.0</SupportedOSPlatformVersion>
+    <!-- macOS app builds enable the trim analyzer. These apps aren't trimmed (TrimMode=copy on macOS) and MVC isn't trimmable. -->
+    <EnableTrimAnalyzer Condition="'$(TargetFramework)' == 'net10.0-macos'">false</EnableTrimAnalyzer>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <RootNamespace>ReactApp</RootNamespace>

@@ -22,6 +22,7 @@ To use your own adapter, register an `IDesktopPlatform` in DI or call `app.RunDe
 ## macOS: WKWebView (`net10.0-macos`)
 
 - **Requirements**: macOS 14 or later.
+- **Trimming**: macOS app builds aren't trimmed by default, which ASP.NET Core MVC needs. The templates set `EnableTrimAnalyzer=false` for `net10.0-macos` to silence the analyzer the macOS SDK turns on; don't enable `PublishTrimmed` for MVC apps.
 - **Build**: needs the macOS workload (`dotnet workload install macos`) and, to build app bundles, the Xcode version that workload expects.
 - **Window**: `NSWindow` with an app menu (Hide, Quit) and an Edit menu so copy/paste/undo shortcuts reach the WebView. `RunDesktop()` must be called on the main thread (the default for `Main`).
 - **Schemes**: one `WKURLSchemeHandler` serves `app://` and `ipc://`; request bodies are read from `HTTPBody` or `HTTPBodyStream`.
