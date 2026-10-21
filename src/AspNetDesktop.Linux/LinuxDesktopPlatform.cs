@@ -1,3 +1,4 @@
+using System.Runtime.InteropServices;
 using System.Runtime.Versioning;
 using System.Text;
 using AspNetDesktop.Hosting;
@@ -159,8 +160,7 @@ public sealed partial class LinuxDesktopPlatform : IDesktopPlatform
 
     private static DesktopHttpRequest ToDesktopRequest(WebKit.URISchemeRequest request)
     {
-        HeaderDictionary headers = new();
-        request.GetHttpHeaders()?.Foreach((name, value) => headers.Append(name, value));
+        HeaderDictionary headers = ReadHeaders(request.GetHttpHeaders());
 
         MemoryStream? body = null;
         Gio.InputStream? input = request.GetHttpBody();
@@ -194,7 +194,11 @@ public sealed partial class LinuxDesktopPlatform : IDesktopPlatform
     private static WebKit.URISchemeResponse ToSchemeResponse(DesktopHttpResponse response)
     {
         byte[] data = response.Body.ToArray();
-        Gio.MemoryInputStream stream = Gio.MemoryInputStream.NewFromBytes(GLib.Bytes.New(data));
+
+        // GLib.Bytes rejects empty buffers (it reports their size as GC memory pressure).
+        Gio.MemoryInputStream stream = data.Length == 0
+            ? Gio.MemoryInputStream.New()
+            : Gio.MemoryInputStream.NewFromBytes(GLib.Bytes.New(data));
         WebKit.URISchemeResponse schemeResponse = WebKit.URISchemeResponse.New(stream, data.Length);
         schemeResponse.SetStatus((uint)response.StatusCode, response.ReasonPhrase);
 
@@ -218,6 +222,37 @@ public sealed partial class LinuxDesktopPlatform : IDesktopPlatform
         }
 
         return schemeResponse;
+    }
+
+    private static unsafe HeaderDictionary ReadHeaders(Soup.MessageHeaders? source)
+    {
+        HeaderDictionary headers = new();
+        if (source is null)
+        {
+            return headers;
+        }
+
+        // GirCore's MessageHeaders.Foreach cannot marshal its callback, so call libsoup directly.
+        GCHandle target = GCHandle.Alloc(headers);
+        try
+        {
+            LibSoup.MessageHeadersForeach(source.Handle.DangerousGetHandle(), &CollectHeader, GCHandle.ToIntPtr(target));
+        }
+        finally
+        {
+            target.Free();
+        }
+
+        return headers;
+    }
+
+    [UnmanagedCallersOnly]
+    private static void CollectHeader(IntPtr name, IntPtr value, IntPtr userData)
+    {
+        if (GCHandle.FromIntPtr(userData).Target is HeaderDictionary headers && Marshal.PtrToStringUTF8(name) is { } headerName)
+        {
+            headers.Append(headerName, Marshal.PtrToStringUTF8(value) ?? string.Empty);
+        }
     }
 
     private bool OnDecidePolicy(WebKit.WebView sender, WebKit.WebView.DecidePolicySignalArgs args)
@@ -292,6 +327,15 @@ public sealed partial class LinuxDesktopPlatform : IDesktopPlatform
         }
 
         return "dev.aspnetdesktop." + segment;
+    }
+
+    private static unsafe partial class LibSoup
+    {
+        [LibraryImport("libsoup-3.0.so.0", EntryPoint = "soup_message_headers_foreach")]
+        public static partial void MessageHeadersForeach(
+            IntPtr headers,
+            delegate* unmanaged<IntPtr, IntPtr, IntPtr, void> callback,
+            IntPtr userData);
     }
 
     [LoggerMessage(Level = LogLevel.Error, Message = "WebView request {Uri} failed.")]
