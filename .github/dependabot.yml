@@ -1,3 +1,4 @@
+# Commit messages follow Conventional Commits: build(deps): / build(deps-dev): / ci(deps):
 version: 2
 updates:
   - package-ecosystem: nuget
@@ -7,6 +8,9 @@ updates:
     groups:
       nuget-minor-and-patch:
         update-types: [minor, patch]
+    commit-message:
+      prefix: build
+      include: scope
     labels: [dependencies, .NET]
 
   - package-ecosystem: npm
@@ -24,6 +28,9 @@ updates:
       # Angular pins a narrow TypeScript range; TypeScript moves when Angular does.
       - dependency-name: typescript
         update-types: [version-update:semver-major, version-update:semver-minor]
+    commit-message:
+      prefix: build
+      include: scope
     labels: [dependencies, javascript]
 
   - package-ecosystem: github-actions
@@ -33,4 +40,7 @@ updates:
     groups:
       actions:
         patterns: ['*']
+    commit-message:
+      prefix: ci
+      include: scope
     labels: [dependencies, github-actions]

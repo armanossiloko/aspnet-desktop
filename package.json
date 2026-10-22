@@ -7,10 +7,17 @@
     "samples/ReactApp/ClientApp"
   ],
   "scripts": {
+    "prepare": "husky",
     "build:client": "npm run build -w aspnetdesktop-client",
     "test:client": "npm test -w aspnetdesktop-client",
     "build:samples": "npm run build:client && npm run build -w angular-app-client -w react-app-client",
     "start:angular": "npm start -w angular-app-client",
-    "start:react": "npm start -w react-app-client"
+    "start:react": "npm start -w react-app-client",
+    "lint:commits": "commitlint --from origin/main --to HEAD --verbose"
+  },
+  "devDependencies": {
+    "@commitlint/cli": "^21.2.4",
+    "@commitlint/config-conventional": "^21.2.4",
+    "husky": "^9.1.7"
   }
 }

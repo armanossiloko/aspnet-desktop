@@ -6,3 +6,4 @@
 *.slnx text eol=crlf
 *.ico binary
 *.png binary
+.husky/* text eol=lf

@@ -51,6 +51,25 @@ dotnet run --project samples/AngularApp -c Release --launch-profile "AngularApp 
 npm run start:react & dotnet run --project samples/ReactApp     # Debug + Vite hot reload
 ```
 
+## Commit messages
+
+Commit messages and pull request titles follow [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/):
+
+```text
+<type>(<optional scope>): <description>
+
+<optional body>
+
+<optional footers>
+```
+
+- **Types**: `feat`, `fix`, `docs`, `perf`, `refactor`, `test`, `build`, `ci`, `chore`, `style`, `revert`.
+- **Scopes** (optional): `hosting`, `windows`, `mac`, `linux`, `client`, `samples`, `templates`, `deps`.
+- Write the description in the imperative, starting lowercase, without a trailing period: `fix(linux): read request bodies natively`. Keep the header within 100 characters.
+- Mark breaking changes with `!` before the colon (`feat(hosting)!: rename DesktopOptions`) and a `BREAKING CHANGE:` footer.
+
+`npm ci` installs a commit-msg hook ([husky](https://typicode.github.io/husky/) + [commitlint](https://commitlint.js.org/)) that rejects other formats, and the **Conventional commits** check enforces the same rules on pull requests. Squash merges use the pull request title as the commit message, so the title must follow the format too. `npm run lint:commits` checks every commit on your branch against `origin/main`.
+
 ## Pull requests
 
 - Keep changes focused; one topic per PR.
