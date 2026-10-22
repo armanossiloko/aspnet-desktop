@@ -1,11 +1,16 @@
 name: CodeQL
 
+# Pull requests and pushes to master are analysed by CI, for the languages they change. The weekly run analyses
+# everything with the latest queries.
 on:
-  push:
-    branches: [master]
-  pull_request:
   schedule:
     - cron: '27 4 * * 1'
+  workflow_call:
+    inputs:
+      languages:
+        description: JSON array of the CodeQL languages to analyse.
+        type: string
+        required: true
 
 permissions:
   contents: read
@@ -20,20 +25,14 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        include:
-          - language: csharp
-            build-mode: none
-          - language: javascript-typescript
-            build-mode: none
-          - language: actions
-            build-mode: none
+        language: ${{ fromJSON(inputs.languages || '["actions", "csharp", "javascript-typescript"]') }}
     steps:
       - uses: actions/checkout@v7
 
       - uses: github/codeql-action/init@v4
         with:
           languages: ${{ matrix.language }}
-          build-mode: ${{ matrix.build-mode }}
+          build-mode: none
           queries: security-and-quality
 
       - uses: github/codeql-action/analyze@v4

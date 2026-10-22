@@ -278,7 +278,7 @@ npm run test:client                                # client: vanilla, Angular, R
 dotnet run --project tests/AspNetDesktop.SmokeTests   # real WebView on this OS (Linux: prefix with xvfb-run -a), exit code 0/1
 ```
 
-CI runs all of these on Windows, Linux and macOS for every push and pull request, then packs the NuGet/npm packages and builds apps from the templates.
+CI runs these on Windows, Linux and macOS, packs the NuGet/npm packages and builds apps from the templates. Each push and pull request runs only the jobs its changes affect.
 
 ## Contributing
 

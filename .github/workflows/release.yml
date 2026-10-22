@@ -87,11 +87,49 @@ jobs:
             echo "client-tag=$CLIENT_TAG"
           } >> "$GITHUB_OUTPUT"
 
+  # CI doesn't run for release PRs (ci.yml ignores release-please's files), so report its required check here and they
+  # can be merged without bypassing the ruleset. The full CI runs below, before anything is published.
+  release-prs:
+    name: Report CI on release PRs
+    needs: release-please
+    runs-on: ubuntu-24.04
+    permissions:
+      checks: write
+      pull-requests: read
+    steps:
+      - name: Report CI result
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          # The same list as in ci.yml: release-please's version and changelog changes.
+          release_files='CHANGELOG\.md|src/client/CHANGELOG\.md|\.release-please-manifest\.json|src/client/package\.json|package-lock\.json'
+          gh pr list --repo "$GITHUB_REPOSITORY" --state open --author app/github-actions --limit 20 \
+            --json number,headRefName,headRefOid,files \
+            --jq '.[] | select(.headRefName | startswith("release-please--")) | [.number, .headRefOid, ([.files[].path] | join(" "))] | @tsv' |
+          while IFS=$'\t' read -r number sha files; do
+            if tr ' ' '\n' <<< "$files" | grep -v -x -E "$release_files" | grep -q .; then
+              echo "#$number changes more than versions and changelogs, so CI checks it."
+              continue
+            fi
+            gh api "repos/$GITHUB_REPOSITORY/check-runs" --silent \
+              -f name='CI result' -f head_sha="$sha" -f status=completed -f conclusion=success \
+              -f 'output[title]=Release PR: nothing to build' \
+              -f 'output[summary]=This pull request only changes versions and changelogs. The Release workflow runs the full CI before it publishes the release.'
+            echo "#$number: reported CI result on $sha."
+          done
+
   ci:
     name: CI
     needs: release-please
     if: needs.release-please.outputs.nuget == 'true' || needs.release-please.outputs.client == 'true'
+    # Covers what ci.yml's jobs declare, including CodeQL's, although CodeQL doesn't run here.
+    permissions:
+      contents: read
+      pull-requests: read
+      security-events: write
     uses: ./.github/workflows/ci.yml
+    with:
+      full: true
 
   pack-nuget:
     name: Pack NuGet packages

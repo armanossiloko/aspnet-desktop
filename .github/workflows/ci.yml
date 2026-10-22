@@ -1,11 +1,27 @@
 name: CI
 
+# The only workflow that runs for pull requests and pushes to master. The changes job works out which jobs a change
+# needs (.github/scripts/affected-jobs.sh) and the others are skipped. "CI result" is the one required check.
 on:
   push:
     branches: [master]
+    # Release-please's own files: release PRs and their merges are checked by the Release workflow instead.
+    paths-ignore:
+      - CHANGELOG.md
+      - '**/CHANGELOG.md'
+      - .release-please-manifest.json
   pull_request:
+    paths-ignore:
+      - CHANGELOG.md
+      - '**/CHANGELOG.md'
+      - .release-please-manifest.json
   workflow_dispatch:
   workflow_call:
+    inputs:
+      full:
+        description: Run every build and test job (CodeQL and the commit check are skipped).
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -21,8 +37,144 @@ env:
   NUGET_XMLDOC_MODE: skip
 
 jobs:
+  changes:
+    name: Changes
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      pull-requests: read
+    outputs:
+      commits: ${{ steps.affected.outputs.commits }}
+      client: ${{ steps.affected.outputs.client }}
+      build: ${{ steps.affected.outputs.build }}
+      smoke: ${{ steps.affected.outputs.smoke }}
+      pack: ${{ steps.affected.outputs.pack }}
+      codeql: ${{ steps.affected.outputs.codeql }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          sparse-checkout: .github/scripts
+
+      - name: Work out the affected jobs
+        id: affected
+        env:
+          GH_TOKEN: ${{ github.token }}
+          FULL: ${{ inputs.full }}
+          PR: ${{ github.event.pull_request.number }}
+          PR_FILES: ${{ github.event.pull_request.changed_files }}
+          PR_AUTHOR: ${{ github.event.pull_request.user.login }}
+          HEAD_REF: ${{ github.head_ref }}
+          BEFORE: ${{ github.event.before }}
+          HEAD_MESSAGE: ${{ github.event.head_commit.message }}
+        run: |
+          all_languages='codeql=["actions","csharp","javascript-typescript"]'
+          every_job() { printf '%s\n' client=true build=true smoke=true pack=true; }
+
+          if [ "$FULL" = true ]; then
+            # Called by the Release workflow before it publishes.
+            { echo commits=false; every_job; echo 'codeql=[]'; } >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          complete=false
+          case "$GITHUB_EVENT_NAME" in
+            pull_request)
+              files=$(gh api "repos/$GITHUB_REPOSITORY/pulls/$PR/files" --paginate --jq '.[] | .filename, (.previous_filename // empty)')
+              # The API lists at most 3000 files.
+              [ "$PR_FILES" -gt 3000 ] || complete=true
+              [ "$PR_AUTHOR" = 'github-actions[bot]' ] && [[ "$HEAD_REF" == release-please--* ]] && release=true || release=false
+              ;;
+            push)
+              if [ "$BEFORE" != 0000000000000000000000000000000000000000 ] &&
+                compare=$(gh api "repos/$GITHUB_REPOSITORY/compare/$BEFORE...$GITHUB_SHA"); then
+                files=$(jq -r '.files[] | .filename, (.previous_filename // empty)' <<< "$compare")
+                # The API lists at most 300 files.
+                complete=$(jq '.files | length < 300' <<< "$compare")
+              fi
+              [[ "$HEAD_MESSAGE" == "chore(master): release "* ]] && release=true || release=false
+              ;;
+            *)
+              # Manual runs check everything.
+              { echo commits=false; every_job; echo "$all_languages"; } >> "$GITHUB_OUTPUT"
+              exit 0
+              ;;
+          esac
+
+          if [ "$complete" != true ]; then
+            echo "Couldn't list every changed file; running everything."
+            { echo commits=true; every_job; echo "$all_languages"; } >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          printf 'Changed files:\n%s\n' "$files"
+
+          # Release PRs (and their merges) only bump versions and changelogs, and the Release workflow runs the full
+          # CI before it publishes. Anything else pushed to a release PR is checked like any other change.
+          release_files='CHANGELOG\.md|src/client/CHANGELOG\.md|\.release-please-manifest\.json|src/client/package\.json|package-lock\.json'
+          if [ "$release" = true ] && ! grep -v -x -E "$release_files" <<< "$files" | grep -q .; then
+            echo "Only release-please's version and changelog changes: nothing to run."
+            printf '%s\n' commits=false client=false build=false smoke=false pack=false 'codeql=[]' >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          affected=$(bash .github/scripts/affected-jobs.sh <<< "$files")
+          echo "$affected"
+          { echo commits=true; echo "$affected"; } >> "$GITHUB_OUTPUT"
+
+  commits:
+    name: Conventional commits
+    needs: changes
+    if: needs.changes.outputs.commits == 'true'
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      pull-requests: read
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci --ignore-scripts
+
+      # Squash merges use the pull request title as the commit message. The title comes from the API rather than the
+      # event, so re-running this job after renaming the pull request checks the new title.
+      - name: Check pull request title
+        if: github.event_name == 'pull_request'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR: ${{ github.event.pull_request.number }}
+        run: gh pr view "$PR" --repo "$GITHUB_REPOSITORY" --json title --jq .title | npx commitlint --verbose
+
+      - name: Check pull request commits
+        if: github.event_name == 'pull_request'
+        env:
+          BASE: ${{ github.event.pull_request.base.sha }}
+          HEAD: ${{ github.event.pull_request.head.sha }}
+        run: npx commitlint --from "$BASE" --to "$HEAD" --verbose
+
+      - name: Check pushed commits
+        if: github.event_name == 'push'
+        env:
+          BEFORE: ${{ github.event.before }}
+        run: |
+          if git merge-base --is-ancestor "$BEFORE" HEAD 2>/dev/null; then
+            npx commitlint --from "$BEFORE" --to HEAD --verbose
+          else
+            # New branch or rewritten history: check every commit, including the root.
+            root="$(git rev-list --max-parents=0 HEAD)"
+            git log -1 --format=%B "$root" | npx commitlint --verbose
+            npx commitlint --from "$root" --to HEAD --verbose
+          fi
+
   client:
     name: JS client
+    needs: changes
+    if: needs.changes.outputs.client == 'true'
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v7
@@ -45,6 +197,8 @@ jobs:
 
   build:
     name: Build & test (${{ matrix.name }})
+    needs: changes
+    if: needs.changes.outputs.build == 'true'
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -91,6 +245,8 @@ jobs:
 
   smoke:
     name: WebView smoke test (${{ matrix.name }})
+    needs: changes
+    if: needs.changes.outputs.smoke == 'true'
     runs-on: ${{ matrix.os }}
     timeout-minutes: 20
     strategy:
@@ -165,6 +321,8 @@ jobs:
 
   pack:
     name: Pack & template check
+    needs: changes
+    if: needs.changes.outputs.pack == 'true'
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v7
@@ -221,3 +379,29 @@ jobs:
           name: packages
           path: artifacts/
           if-no-files-found: error
+
+  codeql:
+    name: CodeQL
+    needs: changes
+    if: needs.changes.outputs.codeql != '[]'
+    permissions:
+      contents: read
+      security-events: write
+    uses: ./.github/workflows/codeql.yml
+    with:
+      languages: ${{ needs.changes.outputs.codeql }}
+
+  # The required check. It passes when every job passed or was skipped (not affected by the change), and fails if any
+  # job failed or was cancelled.
+  result:
+    name: CI result
+    needs: [changes, commits, client, build, smoke, pack, codeql]
+    if: ${{ !cancelled() }}
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Check the job results
+        env:
+          NEEDS: ${{ toJSON(needs) }}
+        run: |
+          jq -r 'to_entries[] | "\(.key): \(.value.result)"' <<< "$NEEDS"
+          jq -e 'all(.[]; .result == "success" or .result == "skipped")' <<< "$NEEDS" > /dev/null
