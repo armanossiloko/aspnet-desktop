@@ -139,11 +139,8 @@ internal sealed partial class HttpApplicationInvoker<TContext>(IHttpApplication<
 
     private sealed class RequestLifetimeFeature(CancellationTokenSource aborted) : IHttpRequestLifetimeFeature
     {
-        public CancellationToken RequestAborted
-        {
-            get => aborted.Token;
-            set => throw new NotSupportedException();
-        }
+        // Settable like Kestrel's: middleware such as UseRequestTimeouts() swaps in a linked token.
+        public CancellationToken RequestAborted { get; set; } = aborted.Token;
 
         public void Abort() => aborted.Cancel();
     }

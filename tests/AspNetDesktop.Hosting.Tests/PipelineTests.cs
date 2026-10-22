@@ -9,6 +9,7 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Hosting.Server;
 using Microsoft.AspNetCore.Hosting.Server.Features;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http.Timeouts;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace AspNetDesktop.Hosting.Tests;
@@ -277,6 +278,32 @@ public sealed class PipelineTests
             new DesktopHttpRequest { Method = "GET", Uri = new Uri("ipc://localhost/api/metadata") }, Ct);
 
         Assert.Equal(503, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task RequestTimeouts_ReplaceRequestAborted_AndTimeOutWith504()
+    {
+        await using TestHost host = await TestHost.StartAsync(
+            build: builder => builder.Services.AddRequestTimeouts(),
+            map: app =>
+            {
+                // UseRequestTimeouts() assigns HttpContext.RequestAborted, which the server must allow.
+                app.UseRequestTimeouts();
+                app.MapGet("/api/fast", () => "fast").WithRequestTimeout(TimeSpan.FromSeconds(30));
+                app.MapGet("/api/slow", async (HttpContext context) =>
+                {
+                    await Task.Delay(TimeSpan.FromSeconds(30), context.RequestAborted);
+                    return "slow";
+                }).WithRequestTimeout(TimeSpan.FromMilliseconds(100));
+            });
+        HttpClient client = host.CreateClient();
+
+        HttpResponseMessage fast = await client.GetAsync("/api/fast", Ct);
+        HttpResponseMessage slow = await client.GetAsync("/api/slow", Ct);
+
+        Assert.Equal(HttpStatusCode.OK, fast.StatusCode);
+        Assert.Equal("fast", await fast.Content.ReadAsStringAsync(Ct));
+        Assert.Equal(HttpStatusCode.GatewayTimeout, slow.StatusCode);
     }
 
     private static int GetFreePort()
