@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.1](https://github.com/armanossiloko/aspnet-desktop/compare/AspNetDesktop-v0.1.0...AspNetDesktop-v0.1.1) (2026-10-22)
+
+
+### Bug Fixes
+
+* **deps:** patch the Vite dev server advisories in the samples and templates ([c22aa14](https://github.com/armanossiloko/aspnet-desktop/commit/c22aa142856621e057785d7e9810e99fae9b3436))
+
 ## 0.1.0 (2026-10-22)
 
 
