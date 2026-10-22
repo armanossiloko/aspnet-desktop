@@ -7,6 +7,12 @@ on:
   push:
     branches: [master]
   workflow_dispatch:
+    inputs:
+      publish:
+        description: Publish an existing release again from its tag, e.g. after a publish job failed.
+        type: choice
+        options: [none, AspNetDesktop, aspnetdesktop-client]
+        default: none
 
 permissions:
   contents: read
@@ -29,20 +35,57 @@ jobs:
       issues: write
       pull-requests: write
     outputs:
-      nuget: ${{ steps.release.outputs.release_created }}
-      nuget-version: ${{ steps.release.outputs.version }}
-      nuget-tag: ${{ steps.release.outputs.tag_name }}
-      client: ${{ steps.release.outputs['src/client--release_created'] }}
-      client-version: ${{ steps.release.outputs['src/client--version'] }}
-      client-tag: ${{ steps.release.outputs['src/client--tag_name'] }}
+      nuget: ${{ steps.publish.outputs.nuget }}
+      nuget-version: ${{ steps.publish.outputs.nuget-version }}
+      nuget-tag: ${{ steps.publish.outputs.nuget-tag }}
+      client: ${{ steps.publish.outputs.client }}
+      client-version: ${{ steps.publish.outputs.client-version }}
+      client-tag: ${{ steps.publish.outputs.client-tag }}
     steps:
       - uses: googleapis/release-please-action@v5
         id: release
         with:
-          # PRs opened with GITHUB_TOKEN don't trigger workflows, so release PRs get no CI checks without a PAT.
+          # GITHUB_TOKEN-made release PRs only get CI runs after a maintainer approves them; a PAT avoids that.
           token: ${{ secrets.RELEASE_PLEASE_TOKEN || github.token }}
           config-file: release-please-config.json
           manifest-file: .release-please-manifest.json
+
+      - name: Collect the releases to publish
+        id: publish
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPUBLISH: ${{ inputs.publish }}
+          NUGET: ${{ steps.release.outputs.release_created }}
+          NUGET_VERSION: ${{ steps.release.outputs.version }}
+          NUGET_TAG: ${{ steps.release.outputs.tag_name }}
+          CLIENT: ${{ steps.release.outputs['src/client--release_created'] }}
+          CLIENT_VERSION: ${{ steps.release.outputs['src/client--version'] }}
+          CLIENT_TAG: ${{ steps.release.outputs['src/client--tag_name'] }}
+        run: |
+          # A manual run can publish a component's latest release again (the version is in the manifest).
+          if [ "$REPUBLISH" = AspNetDesktop ] || [ "$REPUBLISH" = aspnetdesktop-client ]; then
+            path=$([ "$REPUBLISH" = AspNetDesktop ] && echo . || echo src/client)
+            version=$(gh api "repos/$GITHUB_REPOSITORY/contents/.release-please-manifest.json?ref=$GITHUB_SHA" --jq .content \
+              | base64 -d | jq -r --arg path "$path" '.[$path] // empty')
+            [ -n "$version" ] || { echo "::error::$REPUBLISH has not been released yet."; exit 1; }
+            tag="$REPUBLISH-v$version"
+            gh release view "$tag" --repo "$GITHUB_REPOSITORY" > /dev/null
+            echo "Publishing $tag again."
+            if [ "$REPUBLISH" = AspNetDesktop ]; then
+              NUGET=true NUGET_VERSION=$version NUGET_TAG=$tag
+            else
+              CLIENT=true CLIENT_VERSION=$version CLIENT_TAG=$tag
+            fi
+          fi
+
+          {
+            echo "nuget=${NUGET:-false}"
+            echo "nuget-version=$NUGET_VERSION"
+            echo "nuget-tag=$NUGET_TAG"
+            echo "client=${CLIENT:-false}"
+            echo "client-version=$CLIENT_VERSION"
+            echo "client-tag=$CLIENT_TAG"
+          } >> "$GITHUB_OUTPUT"
 
   ci:
     name: CI
@@ -57,6 +100,8 @@ jobs:
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v7
+        with:
+          ref: ${{ needs.release-please.outputs.nuget-tag }}
 
       - uses: actions/setup-dotnet@v6
         with:
@@ -107,6 +152,8 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v7
+        with:
+          ref: ${{ needs.release-please.outputs.client-tag }}
 
       - uses: actions/setup-node@v7
         with:
@@ -122,6 +169,8 @@ jobs:
           OWNER: ${{ github.repository_owner }}
         run: |
           test "$(node -p "require('./src/client/package.json').version")" = "$VERSION"
+          # npm pack doesn't create the destination folder.
+          mkdir -p artifacts
           npm pack -w src/client --pack-destination artifacts
           # GitHub Packages only hosts scoped npm packages.
           npm pkg set name="@$OWNER/aspnetdesktop-client" -w src/client

@@ -95,7 +95,12 @@ npm trusted publishing can only be configured once the package exists, so the fi
 
 ## When something fails
 
-The GitHub Release and tag exist as soon as the release PR is merged; packages follow once CI passes. If a later job fails, fix the cause and re-run the failed jobs from the workflow run. Pushes use `--skip-duplicate`, so packages that already went out are skipped. Don't delete the tag: release-please uses it to find the last release.
+The GitHub Release and tag exist as soon as the release PR is merged; packages follow once CI passes. If a later job fails:
+
+- **Something outside the workflow** (a registry outage, missing credentials): fix it and re-run the failed jobs from the workflow run.
+- **The workflow itself**: re-runs use the workflow file of the original commit, so fix it on `master`, then run **Release** manually with **publish** set to the component (`gh workflow run release.yml -f publish=aspnetdesktop-client`). That builds the component's latest release again from its tag and publishes it.
+
+Pushes use `--skip-duplicate`, so packages that already went out are skipped. Don't delete the tag: release-please uses it to find the last release.
 
 ## Configuration files
 
