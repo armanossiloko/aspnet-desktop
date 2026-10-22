@@ -148,7 +148,7 @@ export function createDesktopHttpClient(options: DesktopHttpClientOptions = {}):
     }
 
     applyRequestToken(headers);
-    const body = serializeBody(requestOptions.body, headers);
+    const body = await serializeBody(requestOptions.body, headers);
 
     let response: Response;
     try {
@@ -292,9 +292,15 @@ function toQueryString(params?: DesktopQueryParams): string {
   return search.toString();
 }
 
-function serializeBody(body: unknown, headers: Headers): BodyInit | undefined {
+async function serializeBody(body: unknown, headers: Headers): Promise<BodyInit | undefined> {
   if (body === undefined || body === null) {
     return undefined;
+  }
+
+  if (typeof ReadableStream !== 'undefined' && body instanceof ReadableStream) {
+    // fetch() rejects stream bodies without `duplex: 'half'` and only streams them over HTTP/2, which the desktop
+    // schemes aren't. The adapters buffer request bodies anyway, so read the stream up front.
+    return new Response(body).blob();
   }
 
   if (
@@ -303,8 +309,7 @@ function serializeBody(body: unknown, headers: Headers): BodyInit | undefined {
     body instanceof FormData ||
     body instanceof URLSearchParams ||
     body instanceof ArrayBuffer ||
-    ArrayBuffer.isView(body) ||
-    (typeof ReadableStream !== 'undefined' && body instanceof ReadableStream)
+    ArrayBuffer.isView(body)
   ) {
     return body as BodyInit;
   }

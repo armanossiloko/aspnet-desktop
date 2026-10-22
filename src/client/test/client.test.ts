@@ -60,6 +60,27 @@ describe('createDesktopHttpClient', () => {
     expect(requests[0]!.headers.get('Content-Type')).toBe('text/plain');
   });
 
+  it('reads ReadableStream bodies up front instead of streaming them', async () => {
+    let sent: RequestInit | undefined;
+    const fetch = (async (_input: RequestInfo | URL, init?: RequestInit) => {
+      sent = init;
+      return new Response(null, { status: 204 });
+    }) as typeof globalThis.fetch;
+    const stream = new ReadableStream<Uint8Array>({
+      start(controller) {
+        controller.enqueue(new TextEncoder().encode('streamed'));
+        controller.close();
+      },
+    });
+
+    await createDesktopHttpClient({ fetch }).post('/api/upload', stream, { headers: { 'Content-Type': 'text/plain' } });
+
+    // fetch() rejects stream bodies without `duplex: 'half'`; a Blob works everywhere.
+    expect(sent?.body).toBeInstanceOf(Blob);
+    expect(await (sent!.body as Blob).text()).toBe('streamed');
+    expect(new Headers(sent?.headers).get('Content-Type')).toBe('text/plain');
+  });
+
   it('appends query params, skipping null and expanding arrays', async () => {
     const { fetch, requests } = mockFetch(() => json([]));
     const desktop = createDesktopHttpClient({ fetch });
