@@ -10,7 +10,7 @@
     <RepositoryUrl>https://github.com/armanossiloko/aspnet-desktop.git</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
     <PackageReleaseNotes>https://github.com/armanossiloko/aspnet-desktop/releases</PackageReleaseNotes>
-    <PackageTags>aspnetcore;desktop;webview;webview2;wkwebview;webkitgtk;angular;react;tauri;electron</PackageTags>
+    <PackageTags>aspnetcore;desktop;webview;webview2;wkwebview;webkitgtk;angular;react;vue;tauri;electron</PackageTags>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <PackageIcon>icon.png</PackageIcon>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
