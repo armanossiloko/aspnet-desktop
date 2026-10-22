@@ -4,7 +4,16 @@
 
 It is a **separate client**. It never wraps or replaces the global `fetch` or Angular's `HttpClient`; those keep doing real HTTP.
 
-## Vanilla / React / Vue
+| Import | For |
+|---|---|
+| `aspnetdesktop-client` | Any framework or none: `createDesktopHttpClient()` |
+| `aspnetdesktop-client/angular` | Angular: `DesktopHttpClient` (an `HttpClient`) and `provideDesktopHttpClient()` |
+| `aspnetdesktop-client/react` | React 18+: `DesktopHttpProvider` and `useDesktopHttpClient()` |
+| `aspnetdesktop-client/vue` | Vue 3.3+: the `createDesktopHttp()` plugin and `useDesktopHttpClient()` |
+
+Each framework is an optional peer dependency; install only the one you use.
+
+## Vanilla (and Svelte, Solid, ...)
 
 ```ts
 import { createDesktopHttpClient, DesktopHttpError } from 'aspnetdesktop-client';
@@ -31,6 +40,60 @@ try {
 
 Options per request: `headers`, `params`, `responseType` (`json` | `text` | `blob` | `arraybuffer`), `signal`, `credentials`.
 Objects are sent as JSON; strings, `FormData`, `Blob`, `URLSearchParams` and buffers are sent as-is.
+
+## React
+
+```tsx
+import { DesktopHttpProvider, useDesktopHttpClient } from 'aspnetdesktop-client/react';
+
+createRoot(document.getElementById('root')!).render(
+  <DesktopHttpProvider>
+    <App />
+  </DesktopHttpProvider>,
+);
+
+function Orders() {
+  const desktop = useDesktopHttpClient();
+  const [orders, setOrders] = useState<Order[]>([]);
+
+  useEffect(() => {
+    const abort = new AbortController();
+    desktop.get<Order[]>('/api/orders', { signal: abort.signal }).then(setOrders);
+    return () => abort.abort();
+  }, [desktop]);
+  // ...
+}
+```
+
+- `DesktopHttpProvider` takes `options` (`baseUrl`, `headers`, `fetch`) or a ready-made `client`, e.g. a fake in tests.
+- Without a provider, `useDesktopHttpClient()` returns a shared default client.
+- The client's promises work as-is as a TanStack Query `queryFn`: `({ signal }) => desktop.get('/api/orders', { signal })`.
+- `aspnetdesktop-client/react` re-exports the core API (`DesktopHttpError`, `getDesktopHostConfig`, ...).
+
+## Vue
+
+```ts
+// main.ts
+import { createDesktopHttp } from 'aspnetdesktop-client/vue';
+
+createApp(App).use(createDesktopHttp()).mount('#app');
+```
+
+```vue
+<script setup lang="ts">
+import { onMounted, ref } from 'vue';
+import { useDesktopHttpClient } from 'aspnetdesktop-client/vue';
+
+const desktop = useDesktopHttpClient();
+const orders = ref<Order[]>([]);
+onMounted(async () => (orders.value = await desktop.get<Order[]>('/api/orders')));
+</script>
+```
+
+- `createDesktopHttp()` takes the client options (`baseUrl`, `headers`, `fetch`) or a ready-made `client`.
+- The plugin exposes the client as `plugin.client` for code outside components, such as Pinia stores and router guards, and as `this.$desktop` in the Options API.
+- Without the plugin, `useDesktopHttpClient()` returns a shared default client.
+- `aspnetdesktop-client/vue` re-exports the core API.
 
 ## Angular
 

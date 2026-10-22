@@ -9,6 +9,7 @@
   <Folder Name="/samples/">
     <Project Path="samples/AngularApp/AngularApp.csproj" />
     <Project Path="samples/ReactApp/ReactApp.csproj" />
+    <Project Path="samples/VueApp/VueApp.csproj" />
   </Folder>
   <Folder Name="/templates/">
     <Project Path="templates/AspNetDesktop.Templates/AspNetDesktop.Templates.csproj" />

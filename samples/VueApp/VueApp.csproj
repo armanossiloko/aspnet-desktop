@@ -1,0 +1,69 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <!-- RunDesktop() picks the adapter from the target framework: WebView2, WKWebView or WebKitGTK. -->
+    <TargetFramework Condition="$([MSBuild]::IsOSPlatform('Windows'))">net10.0-windows</TargetFramework>
+    <TargetFramework Condition="$([MSBuild]::IsOSPlatform('OSX'))">net10.0-macos</TargetFramework>
+    <TargetFramework Condition="'$(TargetFramework)' == ''">net10.0</TargetFramework>
+    <OutputType>WinExe</OutputType>
+    <OutputType Condition="'$(TargetFramework)' != 'net10.0-windows'">Exe</OutputType>
+    <SupportedOSPlatformVersion Condition="'$(TargetFramework)' == 'net10.0-macos'">14.0</SupportedOSPlatformVersion>
+    <!-- macOS app builds enable the trim analyzer. These apps aren't trimmed (TrimMode=copy on macOS) and MVC isn't trimmable. -->
+    <EnableTrimAnalyzer Condition="'$(TargetFramework)' == 'net10.0-macos'">false</EnableTrimAnalyzer>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>VueApp</RootNamespace>
+    <!-- macOS bundle identity (also used as the app's data folder name there). -->
+    <ApplicationId>com.example.VueApp</ApplicationId>
+    <ApplicationTitle>VueApp</ApplicationTitle>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    <PackageReference Include="AspNetDesktop" Version="0.1.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Using Include="Microsoft.AspNetCore.Builder" />
+    <Using Include="Microsoft.AspNetCore.Http" />
+    <Using Include="Microsoft.Extensions.DependencyInjection" />
+    <Using Include="Microsoft.Extensions.Hosting" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="appsettings*.json" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+    <Content Include="wwwroot\**" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+    <None Remove="ClientApp\**" />
+    <Compile Remove="ClientApp\**" />
+  </ItemGroup>
+
+  <!--
+    Release builds run the JavaScript build and copy its output into wwwroot, so the UI is served from app://.
+    Debug builds skip it: the window loads the dev server set in appsettings.Development.json (hot reload).
+    Pass -p:SkipClientBuild=true to reuse an existing wwwroot.
+  -->
+  <PropertyGroup>
+    <ClientAppDir>$(MSBuildProjectDirectory)/ClientApp/</ClientAppDir>
+    <ClientAppDist>$(ClientAppDir)dist/</ClientAppDist>
+    <BuildClientApp Condition="'$(BuildClientApp)' == '' and '$(Configuration)' == 'Release' and '$(SkipClientBuild)' != 'true'">true</BuildClientApp>
+  </PropertyGroup>
+
+  <Target Name="BuildClientApp" BeforeTargets="AssignTargetPaths" DependsOnTargets="$(BuildClientAppDependsOn)" Condition="'$(BuildClientApp)' == 'true'">
+    <Exec Command="npm install" WorkingDirectory="$(ClientAppDir)" Condition="'$(ClientAppSkipInstall)' != 'true' and !Exists('$(ClientAppDir)node_modules')" />
+    <Exec Command="npm run build" WorkingDirectory="$(ClientAppDir)" />
+
+    <RemoveDir Directories="$(MSBuildProjectDirectory)/wwwroot" />
+    <ItemGroup>
+      <ClientAppDistFile Include="$(ClientAppDist)**/*" />
+    </ItemGroup>
+    <Copy SourceFiles="@(ClientAppDistFile)" DestinationFiles="@(ClientAppDistFile->'$(MSBuildProjectDirectory)/wwwroot/%(RecursiveDir)%(Filename)%(Extension)')" />
+
+    <!-- wwwroot was globbed when the project was evaluated; pick up the fresh build output. -->
+    <ItemGroup>
+      <Content Remove="wwwroot\**" />
+      <Content Include="wwwroot\**" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+    </ItemGroup>
+  </Target>
+
+</Project>

@@ -24,7 +24,7 @@
   <!-- Incremental, so parallel sample builds (or an earlier `npm run build:client`) don't rebuild it. -->
   <Target Name="BuildWorkspaceClientPackage"
           Inputs="@(_WorkspaceClientSource)"
-          Outputs="$(AspNetDesktopRepoRoot)src/client/dist/index.js;$(AspNetDesktopRepoRoot)src/client/dist/angular/index.js">
+          Outputs="$(AspNetDesktopRepoRoot)src/client/dist/index.js;$(AspNetDesktopRepoRoot)src/client/dist/angular/index.js;$(AspNetDesktopRepoRoot)src/client/dist/react/index.js;$(AspNetDesktopRepoRoot)src/client/dist/vue/index.js">
     <Exec Command="npm ci" WorkingDirectory="$(AspNetDesktopRepoRoot)" Condition="!Exists('$(AspNetDesktopRepoRoot)node_modules')" />
     <Exec Command="npm run build -w aspnetdesktop-client" WorkingDirectory="$(AspNetDesktopRepoRoot)" />
   </Target>

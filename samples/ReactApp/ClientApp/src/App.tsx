@@ -1,6 +1,6 @@
 import { type FormEvent, useEffect, useState } from 'react';
-import { DesktopHttpError, getDesktopHostConfig } from 'aspnetdesktop-client';
-import { desktop, type AppMetadata, type GitHubRepository, type Order } from './desktop';
+import { DesktopHttpError, getDesktopHostConfig, useDesktopHttpClient } from 'aspnetdesktop-client/react';
+import { type AppMetadata, type GitHubRepository, type Order } from './models';
 
 interface ValidationProblem {
   title?: string;
@@ -10,6 +10,7 @@ interface ValidationProblem {
 const platform = getDesktopHostConfig()?.platform ?? 'browser';
 
 export function App() {
+  const desktop = useDesktopHttpClient();
   const [metadata, setMetadata] = useState<AppMetadata | null>(null);
   const [metadataError, setMetadataError] = useState<string | null>(null);
   const [orders, setOrders] = useState<Order[]>([]);
@@ -45,7 +46,7 @@ export function App() {
       .catch((error: unknown) => !abort.signal.aborted && setRepositoryError(describe(error)));
 
     return () => abort.abort();
-  }, []);
+  }, [desktop]);
 
   async function addOrder(event: FormEvent) {
     event.preventDefault();

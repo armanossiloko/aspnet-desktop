@@ -18,9 +18,9 @@ Thanks for helping! Issues, ideas and pull requests are all welcome. Please foll
 ## Build and test
 
 ```bash
-npm ci                         # npm workspaces: the client package and both samples
+npm ci                         # npm workspaces: the client package and the sample frontends
 npm run build:client
-npm run test:client            # vitest: vanilla + Angular clients
+npm run test:client            # vitest: vanilla, Angular, React and Vue clients
 
 dotnet build AspNetDesktop.slnx
 dotnet test --solution AspNetDesktop.slnx    # Hosting tests: no WebView needed
@@ -48,7 +48,7 @@ The samples double as the `dotnet new` templates (`samples/*/.template.config`).
 
 ```bash
 dotnet run --project samples/AngularApp -c Release --launch-profile "AngularApp (app://)"
-npm run start:react & dotnet run --project samples/ReactApp     # Debug + Vite hot reload
+npm run start:react & dotnet run --project samples/ReactApp     # Debug + Vite hot reload (same for start:vue / VueApp)
 ```
 
 ## Commit messages

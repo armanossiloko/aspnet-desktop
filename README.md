@@ -18,7 +18,7 @@ Nothing on the machine can reach your API: there is no socket to connect to.
 
 ```mermaid
 flowchart LR
-  spa[Angular / React]
+  spa[Angular / React / Vue]
   spa -->|"HttpClient / fetch https://..."| net[Real network]
   spa -->|"DesktopHttpClient ipc://localhost/api/..."| webview[System WebView]
   webview --> adapter[Platform adapter]
@@ -29,11 +29,11 @@ flowchart LR
 
 ## Get started
 
-**From a template** (Angular or React, with the build wiring and hot reload set up):
+**From a template** (Angular, React or Vue, with the build wiring and hot reload set up):
 
 ```bash
 dotnet new install AspNetDesktop.Templates
-dotnet new aspnetdesktop-react -o MyApp        # or: aspnetdesktop-angular
+dotnet new aspnetdesktop-vue -o MyApp          # or: aspnetdesktop-angular, aspnetdesktop-react
 cd MyApp
 dotnet run -c Release                           # builds the UI into wwwroot and opens the window
 ```
@@ -51,7 +51,7 @@ builder.AddDesktopHost();          // replaces Kestrel; no TCP bind
 builder.Services.AddControllers();
 
 var app = builder.Build();
-app.UseStaticFiles();              // Angular/React dist served from app://
+app.UseStaticFiles();              // Angular/React/Vue dist served from app://
 app.MapControllers();              // real MVC / minimal APIs on ipc://
 app.MapFallbackToFile("index.html");
 app.RunDesktop();                  // opens the window; returns when it closes
@@ -94,13 +94,39 @@ this.desktop.post<Order>('/api/orders', body);
 
 `DesktopHttpClient` *is* an `HttpClient` (same `get/post/put/patch/delete`, generics, `params`, `observe`, `HttpErrorResponse`), constructed with its own backend. Your app's interceptors don't run on it; pass `provideDesktopHttpClient({ interceptors: [...] })` for desktop-only ones.
 
-**React / Vue / vanilla**
+**React**
+
+```tsx
+// main.tsx
+import { DesktopHttpProvider } from 'aspnetdesktop-client/react';
+
+createRoot(root).render(<DesktopHttpProvider><App /></DesktopHttpProvider>);
+
+// component
+const desktop = useDesktopHttpClient();      // ipc://localhost, in-process
+const metadata = await desktop.get<Metadata>('/api/metadata');
+await fetch('https://api.weather.example/forecast');   // real HTTP, untouched
+```
+
+**Vue**
+
+```ts
+// main.ts
+import { createDesktopHttp } from 'aspnetdesktop-client/vue';
+
+createApp(App).use(createDesktopHttp()).mount('#app');
+
+// <script setup>
+const desktop = useDesktopHttpClient();      // or this.$desktop in the Options API
+const metadata = await desktop.get<Metadata>('/api/metadata');
+```
+
+**Svelte, Solid, vanilla, ...**
 
 ```ts
 import { createDesktopHttpClient, DesktopHttpError } from 'aspnetdesktop-client';
 
 const desktop = createDesktopHttpClient();
-const metadata = await desktop.get<Metadata>('/api/metadata');
 try {
   await desktop.post<Order>('/api/orders', { product: 'Tea', quantity: 1 });
 } catch (e) {
@@ -108,7 +134,9 @@ try {
 }
 ```
 
-Both clients resolve against `window.__ASPNETDESKTOP__.ipcBase` (injected by the host) and refuse absolute URLs that aren't on `ipc://`, so real HTTP can't be sent through them by mistake.
+The React, Vue and vanilla clients share one promise-based API (`get/post/put/patch/delete/request`, `DesktopHttpError`), so they work directly as a TanStack Query or SWR fetcher. The provider and the plugin also take a `client` option, so you can swap in a fake in tests.
+
+All clients resolve against `window.__ASPNETDESKTOP__.ipcBase` (injected by the host) and refuse absolute URLs that aren't on `ipc://`, so real HTTP can't be sent through them by mistake.
 
 ## How it works
 
@@ -170,8 +198,8 @@ If your app is started from another working directory, `AddDesktopHost()` falls 
 | [`AspNetDesktop`](https://www.nuget.org/packages/AspNetDesktop) | Metapackage: Hosting + the adapter for your target framework, and `app.RunDesktop()` |
 | [`AspNetDesktop.Hosting`](https://www.nuget.org/packages/AspNetDesktop.Hosting) | `DesktopServer`, options, isolation policy, `AddDesktopHost()`, `CreateClient()`; no UI dependencies |
 | [`AspNetDesktop.Windows`](https://www.nuget.org/packages/AspNetDesktop.Windows) / [`.Mac`](https://www.nuget.org/packages/AspNetDesktop.Mac) / [`.Linux`](https://www.nuget.org/packages/AspNetDesktop.Linux) | Platform adapters |
-| [`AspNetDesktop.Templates`](https://www.nuget.org/packages/AspNetDesktop.Templates) | `dotnet new aspnetdesktop-angular` and `aspnetdesktop-react` |
-| [`aspnetdesktop-client`](https://www.npmjs.com/package/aspnetdesktop-client) | `DesktopHttpClient` for Angular and `createDesktopHttpClient()` for everything else |
+| [`AspNetDesktop.Templates`](https://www.nuget.org/packages/AspNetDesktop.Templates) | `dotnet new aspnetdesktop-angular`, `aspnetdesktop-react` and `aspnetdesktop-vue` |
+| [`aspnetdesktop-client`](https://www.npmjs.com/package/aspnetdesktop-client) | `DesktopHttpClient` for Angular, a provider and hook for React, a plugin and composable for Vue, and `createDesktopHttpClient()` for everything else |
 
 ## Repository layout
 
@@ -182,10 +210,11 @@ src/
   AspNetDesktop.Mac/          net10.0-macos: NSWindow + WKWebView
   AspNetDesktop.Linux/        net10.0: GTK 4 + WebKitGTK 6 (GirCore)
   AspNetDesktop/              metapackage: RunDesktop() picks the adapter for the target framework
-  client/                     aspnetdesktop-client (DesktopHttpClient for Angular and vanilla/React)
+  client/                     aspnetdesktop-client (core client + Angular, React and Vue integrations)
 samples/
   AngularApp/                 Angular 22 + [ApiController] + minimal API   (also the aspnetdesktop-angular template)
   ReactApp/                   React 19 + Vite + the same API               (also the aspnetdesktop-react template)
+  VueApp/                     Vue 3 + Vite + the same API                  (also the aspnetdesktop-vue template)
 templates/
   AspNetDesktop.Templates/    packs the samples as dotnet new templates
 tests/
@@ -215,7 +244,7 @@ dotnet run --project samples/AngularApp -c Release --launch-profile "AngularApp 
 **Debug with hot reload**: run the dev server and the desktop process side by side. The window loads the dev server, and `DesktopHttpClient` still calls `ipc://`.
 
 ```bash
-npm run start:angular          # ng serve on :4200   (or: npm run start:react → Vite on :5173)
+npm run start:angular          # ng serve on :4200   (or: npm run start:react / start:vue → Vite on :5173)
 dotnet run --project samples/AngularApp            # Development profile → Desktop:DevServerUrl
 ```
 
@@ -223,7 +252,7 @@ dotnet run --project samples/AngularApp            # Development profile → Des
 
 ```bash
 dotnet test --solution AspNetDesktop.slnx          # Hosting: MVC, minimal APIs, static files, SPA fallback, CORS, token, no socket
-npm run test:client                                # client: vanilla + Angular
+npm run test:client                                # client: vanilla, Angular, React and Vue
 dotnet run --project tests/AspNetDesktop.SmokeTests   # real WebView on this OS (Linux: prefix with xvfb-run -a), exit code 0/1
 ```
 

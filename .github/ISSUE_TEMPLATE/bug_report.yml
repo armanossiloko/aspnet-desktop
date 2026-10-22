@@ -16,7 +16,7 @@ body:
     id: repro
     attributes:
       label: Minimal reproduction
-      description: Code, a repository link, or steps. `dotnet new aspnetdesktop-react` / `aspnetdesktop-angular` make a good starting point.
+      description: Code, a repository link, or steps. `dotnet new aspnetdesktop-angular` / `aspnetdesktop-react` / `aspnetdesktop-vue` make a good starting point.
     validations:
       required: true
   - type: dropdown

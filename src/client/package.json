@@ -1,7 +1,7 @@
 {
   "name": "aspnetdesktop-client",
   "version": "0.1.0",
-  "description": "DesktopHttpClient: isolated, HTTP-shaped calls from the WebView UI to the in-process ASP.NET Core API over ipc://localhost. Never touches the global fetch or Angular's HttpClient.",
+  "description": "DesktopHttpClient: isolated, HTTP-shaped calls from the WebView UI to the in-process ASP.NET Core API over ipc://localhost, with Angular, React and Vue integrations. Never touches the global fetch or Angular's HttpClient.",
   "license": "MIT",
   "author": "Arman Ossi Loko",
   "homepage": "https://github.com/armanossiloko/aspnet-desktop/tree/master/src/client#readme",
@@ -26,6 +26,14 @@
       "types": "./dist/angular/index.d.ts",
       "default": "./dist/angular/index.js"
     },
+    "./react": {
+      "types": "./dist/react/index.d.ts",
+      "default": "./dist/react/index.js"
+    },
+    "./vue": {
+      "types": "./dist/vue/index.d.ts",
+      "default": "./dist/vue/index.js"
+    },
     "./package.json": "./package.json"
   },
   "files": [
@@ -41,6 +49,7 @@
     "ipc",
     "angular",
     "react",
+    "vue",
     "httpclient"
   ],
   "scripts": {
@@ -52,7 +61,9 @@
   "peerDependencies": {
     "@angular/common": ">=19.0.0",
     "@angular/core": ">=19.0.0",
-    "rxjs": "^7.4.0"
+    "react": ">=18.0.0",
+    "rxjs": "^7.4.0",
+    "vue": ">=3.3.0"
   },
   "peerDependenciesMeta": {
     "@angular/common": {
@@ -61,7 +72,13 @@
     "@angular/core": {
       "optional": true
     },
+    "react": {
+      "optional": true
+    },
     "rxjs": {
+      "optional": true
+    },
+    "vue": {
       "optional": true
     }
   },
@@ -69,9 +86,14 @@
     "@angular/common": "^22.2.0",
     "@angular/compiler": "^22.2.0",
     "@angular/core": "^22.2.0",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
     "rxjs": "~7.8.0",
     "typescript": "~6.0.0",
-    "vitest": "^4.0.8"
+    "vitest": "^4.0.8",
+    "vue": "^3.5.44"
   },
   "publishConfig": {
     "access": "public",

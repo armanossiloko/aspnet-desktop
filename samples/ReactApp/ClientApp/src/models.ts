@@ -1,7 +1,4 @@
-import { createDesktopHttpClient } from 'aspnetdesktop-client';
-
-/** The in-process ASP.NET Core API over ipc://localhost. Real HTTP keeps using fetch. */
-export const desktop = createDesktopHttpClient();
+/** Shapes returned by the in-process API (ipc://localhost) and by real HTTP. */
 
 export interface AppMetadata {
   name: string;

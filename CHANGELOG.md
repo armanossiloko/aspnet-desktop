@@ -15,8 +15,8 @@ First release.
 - Isolation policy: `ipc://` origin allow-list, host-managed CORS, `app://` restricted to GET/HEAD, optional per-process request token, navigation policy that keeps the WebView on UI origins and opens web links in the system browser.
 - Adapters: Windows (WinForms + WebView2), macOS (NSWindow + WKWebView), Linux (GTK 4 + WebKitGTK 6 via GirCore).
 - `AspNetDesktop` metapackage: `app.RunDesktop()` picks the adapter from the target framework.
-- `aspnetdesktop-client` npm package: `createDesktopHttpClient()` for vanilla/React and `provideDesktopHttpClient()` / `DesktopHttpClient` for Angular.
-- `AspNetDesktop.Templates`: `dotnet new aspnetdesktop-angular` and `dotnet new aspnetdesktop-react`.
+- `aspnetdesktop-client` npm package: `createDesktopHttpClient()` for any framework; `provideDesktopHttpClient()` / `DesktopHttpClient` for Angular (`/angular`); `DesktopHttpProvider` / `useDesktopHttpClient()` for React (`/react`); the `createDesktopHttp()` plugin / `useDesktopHttpClient()` for Vue (`/vue`).
+- `AspNetDesktop.Templates`: `dotnet new aspnetdesktop-angular`, `dotnet new aspnetdesktop-react` and `dotnet new aspnetdesktop-vue`.
 
 ### Requirements
 

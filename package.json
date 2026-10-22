@@ -4,15 +4,17 @@
   "workspaces": [
     "src/client",
     "samples/AngularApp/ClientApp",
-    "samples/ReactApp/ClientApp"
+    "samples/ReactApp/ClientApp",
+    "samples/VueApp/ClientApp"
   ],
   "scripts": {
     "prepare": "husky",
     "build:client": "npm run build -w aspnetdesktop-client",
     "test:client": "npm test -w aspnetdesktop-client",
-    "build:samples": "npm run build:client && npm run build -w angular-app-client -w react-app-client",
+    "build:samples": "npm run build:client && npm run build -w angular-app-client -w react-app-client -w vue-app-client",
     "start:angular": "npm start -w angular-app-client",
     "start:react": "npm start -w react-app-client",
+    "start:vue": "npm start -w vue-app-client",
     "lint:commits": "commitlint --from origin/master --to HEAD --verbose"
   },
   "devDependencies": {

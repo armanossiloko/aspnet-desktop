@@ -38,7 +38,7 @@ jobs:
       - run: npm run test:client
 
       - name: Build sample frontends
-        run: npm run build -w angular-app-client -w react-app-client
+        run: npm run build -w angular-app-client -w react-app-client -w vue-app-client
 
       - name: Check package contents
         run: npm pack -w aspnetdesktop-client --dry-run
@@ -211,7 +211,7 @@ jobs:
             </packageSources>
           </configuration>
           EOF
-          for template in angular react; do
+          for template in angular react vue; do
             dotnet new "aspnetdesktop-$template" -o "$work/My${template^}App" --debug:custom-hive "$hive"
             dotnet build "$work/My${template^}App" --packages "$work/packages"
           done

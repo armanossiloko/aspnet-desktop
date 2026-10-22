@@ -22,6 +22,8 @@ updates:
         patterns: ['@angular/*', '@angular-devkit/*', 'typescript', 'rxjs', 'tslib']
       react-vite:
         patterns: ['react', 'react-dom', '@types/react*', 'vite', '@vitejs/*']
+      vue:
+        patterns: ['vue', 'vue-tsc', '@vue/*']
       tooling:
         patterns: ['vitest']
     ignore:

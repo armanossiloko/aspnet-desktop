@@ -8,7 +8,7 @@
     <TargetFramework>net10.0</TargetFramework>
     <PackageId>AspNetDesktop.Templates</PackageId>
     <PackageType>Template</PackageType>
-    <Description>dotnet new templates for AspNetDesktop: desktop apps with an in-process ASP.NET Core backend and an Angular (aspnetdesktop-angular) or React (aspnetdesktop-react) UI.</Description>
+    <Description>dotnet new templates for AspNetDesktop: desktop apps with an in-process ASP.NET Core backend and an Angular (aspnetdesktop-angular), React (aspnetdesktop-react) or Vue (aspnetdesktop-vue) UI.</Description>
     <PackageTags>$(PackageTags);dotnet-new;templates</PackageTags>
     <IncludeBuildOutput>false</IncludeBuildOutput>
     <IncludeSymbols>false</IncludeSymbols>
@@ -25,6 +25,7 @@
   <ItemGroup>
     <TemplateSource Include="Angular" SourceDir="$(AspNetDesktopRepoRoot)samples/AngularApp/" />
     <TemplateSource Include="React" SourceDir="$(AspNetDesktopRepoRoot)samples/ReactApp/" />
+    <TemplateSource Include="Vue" SourceDir="$(AspNetDesktopRepoRoot)samples/VueApp/" />
   </ItemGroup>
 
   <UsingTask TaskName="StageTemplateFile" TaskFactory="RoslynCodeTaskFactory" AssemblyFile="$(MSBuildToolsPath)/Microsoft.Build.Tasks.Core.dll">
