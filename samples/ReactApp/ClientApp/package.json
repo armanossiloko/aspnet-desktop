@@ -10,7 +10,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "aspnetdesktop-client": "^0.1.0",
+    "aspnetdesktop-client": "*",
     "react": "^19.3.0",
     "react-dom": "^19.3.0"
   },

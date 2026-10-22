@@ -282,7 +282,7 @@ CI runs all of these on Windows, Linux and macOS for every push and pull request
 
 ## Contributing
 
-Issues and pull requests are welcome. See [CONTRIBUTING.md](https://github.com/armanossiloko/aspnet-desktop/blob/master/CONTRIBUTING.md), and report security issues privately as described in [SECURITY.md](https://github.com/armanossiloko/aspnet-desktop/blob/master/SECURITY.md). Release notes are in [CHANGELOG.md](https://github.com/armanossiloko/aspnet-desktop/blob/master/CHANGELOG.md).
+Issues and pull requests are welcome. See [CONTRIBUTING.md](https://github.com/armanossiloko/aspnet-desktop/blob/master/CONTRIBUTING.md), and report security issues privately as described in [SECURITY.md](https://github.com/armanossiloko/aspnet-desktop/blob/master/SECURITY.md). Release notes are on the [releases page](https://github.com/armanossiloko/aspnet-desktop/releases) and in the changelogs for the [NuGet packages](https://github.com/armanossiloko/aspnet-desktop/blob/master/CHANGELOG.md) and the [npm client](https://github.com/armanossiloko/aspnet-desktop/blob/master/src/client/CHANGELOG.md).
 
 ## Not in v1
 

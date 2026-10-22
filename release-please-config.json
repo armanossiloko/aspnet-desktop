@@ -1,0 +1,26 @@
+{
+  "include-component-in-tag": true,
+  "separate-pull-requests": true,
+  "bump-minor-pre-major": true,
+  "initial-version": "0.1.0",
+  "packages": {
+    ".": {
+      "release-type": "simple",
+      "component": "AspNetDesktop",
+      "package-name": "AspNetDesktop",
+      "exclude-paths": ["src/client"]
+    },
+    "src/client": {
+      "release-type": "node",
+      "component": "aspnetdesktop-client",
+      "package-name": "aspnetdesktop-client",
+      "extra-files": [
+        {
+          "type": "json",
+          "path": "/package-lock.json",
+          "jsonpath": "$.packages['src/client'].version"
+        }
+      ]
+    }
+  }
+}

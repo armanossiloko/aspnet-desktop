@@ -67,6 +67,7 @@ Commit messages and pull request titles follow [Conventional Commits](https://ww
 - **Scopes** (optional): `hosting`, `windows`, `mac`, `linux`, `client`, `samples`, `templates`, `deps`.
 - Write the description in the imperative, starting lowercase, without a trailing period: `fix(linux): read request bodies natively`. Keep the header within 100 characters.
 - Mark breaking changes with `!` before the colon (`feat(hosting)!: rename DesktopOptions`) and a `BREAKING CHANGE:` footer.
+- The type decides what gets released: `feat`, `fix`, `perf` and breaking changes trigger a release of the component they touch (the npm client for `src/client`, the NuGet packages for everything else), and become its changelog entry. See [docs/releasing.md](docs/releasing.md).
 
 `npm ci` installs a commit-msg hook ([husky](https://typicode.github.io/husky/) + [commitlint](https://commitlint.js.org/)) that rejects messages that aren't Conventional Commits and warns about style (subject case, header length). The **Conventional commits** check applies the same rules to pull requests. Squash merges use the pull request title as the commit message, so the title must follow the format too. `npm run lint:commits` checks every commit on your branch against `origin/master`.
 
@@ -76,7 +77,7 @@ Commit messages and pull request titles follow [Conventional Commits](https://ww
 - Add or update tests: Hosting behavior goes in `tests/AspNetDesktop.Hosting.Tests`, client behavior in `src/client/test`, WebView behavior in the smoke test.
 - Public APIs need XML docs. Builds treat warnings as errors.
 - Match the existing style (`.editorconfig`); file-scoped namespaces, explicit types where the codebase uses them.
-- Update `CHANGELOG.md` under **Unreleased** for user-visible changes.
+- Don't edit `CHANGELOG.md`: release-please writes the changelogs from commit messages, so describe user-visible changes in a `feat` or `fix` commit. See [docs/releasing.md](docs/releasing.md).
 - CI must be green on all three operating systems.
 
 ## Releasing (maintainers)

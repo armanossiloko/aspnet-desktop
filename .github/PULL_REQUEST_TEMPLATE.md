@@ -13,5 +13,4 @@
 
 - [ ] Title and commits follow [Conventional Commits](https://github.com/armanossiloko/aspnet-desktop/blob/master/CONTRIBUTING.md#commit-messages) (`type(scope): description`)
 - [ ] Public APIs have XML docs
-- [ ] `CHANGELOG.md` updated under **Unreleased** (for user-visible changes)
 - [ ] Docs updated (`README.md`, `docs/`) if behavior or configuration changed

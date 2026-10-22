@@ -2,7 +2,7 @@
 
   <!--
     dotnet new templates built from the samples (samples/*/.template.config). At pack time the samples are copied
-    without build output and with the AspNetDesktop / aspnetdesktop-client versions set to this package's version.
+    without build output, with AspNetDesktop set to this package's version and aspnetdesktop-client to the client's.
   -->
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
@@ -68,10 +68,14 @@
     </ItemGroup>
 
     <Error Condition="'$(TemplateNpmRegistry)' != 'npmjs' and '$(TemplateNpmRegistry)' != 'github'" Text="TemplateNpmRegistry must be 'npmjs' or 'github', not '$(TemplateNpmRegistry)'." />
+    <!-- The npm client has its own version (release-please bumps src/client/package.json); use the current one. -->
     <PropertyGroup>
-      <_TemplateClientDependency>^$(PackageVersion)</_TemplateClientDependency>
-      <_TemplateClientDependency Condition="'$(TemplateNpmRegistry)' == 'github'">npm:%40$(GitHubPackagesOwner)/aspnetdesktop-client@^$(PackageVersion)</_TemplateClientDependency>
+      <_ClientPackageJson>$([System.IO.File]::ReadAllText('$(AspNetDesktopRepoRoot)src/client/package.json'))</_ClientPackageJson>
+      <_TemplateClientVersion>$([System.Text.RegularExpressions.Regex]::Match($(_ClientPackageJson), '(?&lt;="version":\s*")[^"]+').Value)</_TemplateClientVersion>
+      <_TemplateClientDependency>^$(_TemplateClientVersion)</_TemplateClientDependency>
+      <_TemplateClientDependency Condition="'$(TemplateNpmRegistry)' == 'github'">npm:%40$(GitHubPackagesOwner)/aspnetdesktop-client@^$(_TemplateClientVersion)</_TemplateClientDependency>
     </PropertyGroup>
+    <Error Condition="'$(_TemplateClientVersion)' == ''" Text="Could not read the version from src/client/package.json." />
 
     <RemoveDir Directories="$(TemplatesStagingDir)" />
     <StageTemplateFile Source="%(_TemplateFile.FullPath)" Destination="$(TemplatesStagingDir)%(_TemplateFile.TemplateName)/%(_TemplateFile.RecursiveDir)%(_TemplateFile.Filename)%(_TemplateFile.Extension)" Version="$(PackageVersion)" ClientDependency="$(_TemplateClientDependency)" />
