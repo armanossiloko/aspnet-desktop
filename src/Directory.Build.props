@@ -8,7 +8,7 @@
     <!-- MIT with an attribution clause: not an SPDX license, so the file ships in the package. -->
     <PackageLicenseFile>LICENSE</PackageLicenseFile>
     <PackageProjectUrl>https://github.com/armanossiloko/aspnet-desktop</PackageProjectUrl>
-    <RepositoryUrl>https://github.com/armanossiloko/aspnet-desktop.git</RepositoryUrl>
+    <RepositoryUrl>https://github.com/armanossiloko/aspnet-desktop</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
     <PackageReleaseNotes>https://github.com/armanossiloko/aspnet-desktop/releases</PackageReleaseNotes>
     <PackageTags>aspnetcore;desktop;webview;webview2;wkwebview;webkitgtk;angular;react;vue;tauri;electron</PackageTags>

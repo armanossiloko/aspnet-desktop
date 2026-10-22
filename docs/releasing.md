@@ -4,14 +4,32 @@ Releases are driven by git tags. Pushing `vX.Y.Z` runs `.github/workflows/releas
 
 1. runs the full CI workflow (build and tests on Windows/Linux/macOS, WebView smoke tests on all three, packing, template checks);
 2. packs the NuGet packages (version from the tag via [MinVer](https://github.com/adamralph/minver)) and the npm package (version set from the tag);
-3. publishes `AspNetDesktop`, `AspNetDesktop.Hosting`, `.Windows`, `.Mac`, `.Linux` and `.Templates` (with symbols) to nuget.org, and `aspnetdesktop-client` to npm with provenance;
-4. creates the GitHub Release with the packages attached and the changelog section as notes.
+3. publishes `AspNetDesktop`, `AspNetDesktop.Hosting`, `.Windows`, `.Mac`, `.Linux` and `.Templates`, and the npm client as `@armanossiloko/aspnetdesktop-client`, to **GitHub Packages**;
+4. if enabled, also publishes to **nuget.org** (with symbols) and **npmjs.com** (`aspnetdesktop-client`, with provenance);
+5. creates the GitHub Release with the packages attached and the changelog section as notes.
 
 Tags with a pre-release suffix (`v0.2.0-preview.1`) publish NuGet pre-releases, use the `next` npm dist-tag and are marked as pre-releases on GitHub.
 
-The publish jobs run in the `release` environment, which only accepts `v*` tags.
+## GitHub Packages (default)
 
-## One-time setup
+Nothing to set up: the workflow publishes with its own `GITHUB_TOKEN`. Packages are linked to this repository through `RepositoryUrl` (NuGet) and `repository` (npm), and are public because the repository is.
+
+- **Consumers need a token** with `read:packages`, even for public packages. The README's [Install](../README.md#install) section shows the one-time setup.
+- **npm names must be scoped** on GitHub Packages, so the client is published as `@armanossiloko/aspnetdesktop-client`. Apps install it under its usual name with an alias (`"aspnetdesktop-client": "npm:@armanossiloko/aspnetdesktop-client@^x.y.z"`), so imports don't change. While `PUBLISH_NPMJS` is off, the templates are packed that way, with a `ClientApp/.npmrc` that routes the scope to GitHub Packages.
+- **No symbol server**: GitHub Packages doesn't host `.snupkg` files. They're attached to the GitHub Release, and Source Link still maps to the sources.
+
+## nuget.org and npmjs.com (opt-in)
+
+Turn each registry on with a repository variable once its credentials (below) are in place:
+
+```bash
+gh variable set PUBLISH_NUGET_ORG --repo armanossiloko/aspnet-desktop --body true
+gh variable set PUBLISH_NPMJS --repo armanossiloko/aspnet-desktop --body true
+```
+
+With `PUBLISH_NPMJS` on, the templates reference `aspnetdesktop-client` from npmjs.com again (no alias, no `.npmrc`). Afterwards, point the README's Install section and badges at the public registries.
+
+These publish jobs run in the `release` environment, which only accepts `v*` tags. A failure in either one fails the release; a registry that is off is skipped.
 
 ### NuGet (pick one)
 

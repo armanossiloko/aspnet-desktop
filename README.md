@@ -1,8 +1,8 @@
 # AspNetDesktop
 
 [![CI](https://github.com/armanossiloko/aspnet-desktop/actions/workflows/ci.yml/badge.svg)](https://github.com/armanossiloko/aspnet-desktop/actions/workflows/ci.yml)
-[![NuGet](https://img.shields.io/nuget/vpre/AspNetDesktop?logo=nuget&label=AspNetDesktop)](https://www.nuget.org/packages/AspNetDesktop)
-[![npm](https://img.shields.io/npm/v/aspnetdesktop-client?logo=npm&label=aspnetdesktop-client)](https://www.npmjs.com/package/aspnetdesktop-client)
+[![Release](https://img.shields.io/github/v/release/armanossiloko/aspnet-desktop?include_prereleases&logo=github&label=release)](https://github.com/armanossiloko/aspnet-desktop/releases)
+[![Packages: GitHub Packages](https://img.shields.io/badge/packages-GitHub%20Packages-24292f?logo=github)](https://github.com/armanossiloko?tab=packages&repo_name=aspnet-desktop)
 [![License: MIT with attribution](https://img.shields.io/badge/license-MIT%20with%20attribution-blue.svg)](https://github.com/armanossiloko/aspnet-desktop/blob/master/LICENSE)
 
 Build desktop apps with an **ASP.NET Core backend** and **any JavaScript UI** (Angular, React, Vue, ...), Tauri-style — but with .NET instead of Rust, and with real MVC instead of `invoke('command')`.
@@ -29,6 +29,21 @@ flowchart LR
 
 ## Get started
 
+### Install
+
+The packages are on [GitHub Packages](https://github.com/armanossiloko?tab=packages&repo_name=aspnet-desktop) for now; nuget.org and npm will follow. GitHub Packages needs a token even for public packages, so once per machine:
+
+1. Create a [personal access token (classic)](https://github.com/settings/tokens/new?scopes=read:packages&description=AspNetDesktop%20packages) with the `read:packages` scope.
+2. Register it with NuGet and npm:
+
+   ```bash
+   # On Windows you can leave out --store-password-in-clear-text (the password is encrypted there).
+   dotnet nuget add source https://nuget.pkg.github.com/armanossiloko/index.json --name aspnetdesktop --username <github-user> --password <token> --store-password-in-clear-text
+   npm config set //npm.pkg.github.com/:_authToken <token>
+   ```
+
+### Create an app
+
 **From a template** (Angular, React or Vue, with the build wiring and hot reload set up):
 
 ```bash
@@ -42,8 +57,13 @@ dotnet run -c Release                           # builds the UI into wwwroot and
 
 ```bash
 dotnet add package AspNetDesktop
-npm install aspnetdesktop-client               # in your frontend
+
+# In your frontend: route the @armanossiloko scope to GitHub Packages, then install under the usual name.
+echo "@armanossiloko:registry=https://npm.pkg.github.com" >> .npmrc
+npm install aspnetdesktop-client@npm:@armanossiloko/aspnetdesktop-client
 ```
+
+Apps created from the templates already have that `.npmrc` and dependency.
 
 ```csharp
 var builder = WebApplication.CreateBuilder(args);
@@ -193,13 +213,15 @@ If your app is started from another working directory, `AddDesktopHost()` falls 
 
 ## Packages
 
+All packages are published to [GitHub Packages](https://github.com/armanossiloko?tab=packages&repo_name=aspnet-desktop) (see [Install](#install)); the npm client is `@armanossiloko/aspnetdesktop-client` there, installed as `aspnetdesktop-client`.
+
 | Package | |
 |---|---|
-| [`AspNetDesktop`](https://www.nuget.org/packages/AspNetDesktop) | Metapackage: Hosting + the adapter for your target framework, and `app.RunDesktop()` |
-| [`AspNetDesktop.Hosting`](https://www.nuget.org/packages/AspNetDesktop.Hosting) | `DesktopServer`, options, isolation policy, `AddDesktopHost()`, `CreateClient()`; no UI dependencies |
-| [`AspNetDesktop.Windows`](https://www.nuget.org/packages/AspNetDesktop.Windows) / [`.Mac`](https://www.nuget.org/packages/AspNetDesktop.Mac) / [`.Linux`](https://www.nuget.org/packages/AspNetDesktop.Linux) | Platform adapters |
-| [`AspNetDesktop.Templates`](https://www.nuget.org/packages/AspNetDesktop.Templates) | `dotnet new aspnetdesktop-angular`, `aspnetdesktop-react` and `aspnetdesktop-vue` |
-| [`aspnetdesktop-client`](https://www.npmjs.com/package/aspnetdesktop-client) | `DesktopHttpClient` for Angular, a provider and hook for React, a plugin and composable for Vue, and `createDesktopHttpClient()` for everything else |
+| `AspNetDesktop` | Metapackage: Hosting + the adapter for your target framework, and `app.RunDesktop()` |
+| `AspNetDesktop.Hosting` | `DesktopServer`, options, isolation policy, `AddDesktopHost()`, `CreateClient()`; no UI dependencies |
+| `AspNetDesktop.Windows` / `.Mac` / `.Linux` | Platform adapters |
+| `AspNetDesktop.Templates` | `dotnet new aspnetdesktop-angular`, `aspnetdesktop-react` and `aspnetdesktop-vue` |
+| `aspnetdesktop-client` | `DesktopHttpClient` for Angular, a provider and hook for React, a plugin and composable for Vue, and `createDesktopHttpClient()` for everything else |
 
 ## Repository layout
 

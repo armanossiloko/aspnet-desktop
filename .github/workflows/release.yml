@@ -16,6 +16,8 @@ env:
   DOTNET_CLI_TELEMETRY_OPTOUT: true
   DOTNET_SKIP_FIRST_TIME_EXPERIENCE: true
 
+# Packages always go to GitHub Packages. nuget.org and npmjs.com are opt-in through the repository variables
+# PUBLISH_NUGET_ORG and PUBLISH_NPMJS (see docs/releasing.md).
 jobs:
   ci:
     name: CI
@@ -56,7 +58,11 @@ jobs:
       - run: npm ci
 
       - name: Pack NuGet packages
-        run: dotnet pack AspNetDesktop.slnx -c Release -o artifacts -p:SkipClientBuild=true
+        shell: bash
+        env:
+          # Apps generated from the templates install aspnetdesktop-client from npmjs.com once it's published there.
+          TEMPLATE_NPM_REGISTRY: ${{ vars.PUBLISH_NPMJS == 'true' && 'npmjs' || 'github' }}
+        run: dotnet pack AspNetDesktop.slnx -c Release -o artifacts -p:SkipClientBuild=true -p:TemplateNpmRegistry="$TEMPLATE_NPM_REGISTRY"
 
       - name: Check NuGet package versions match the tag
         shell: bash
@@ -68,11 +74,19 @@ jobs:
             [[ "$package" == *".${{ steps.version.outputs.version }}.nupkg" ]] || { echo "::error::$package does not match ${{ steps.version.outputs.version }}"; exit 1; }
           done
 
-      - name: Pack npm package
+      - name: Pack npm packages
         shell: bash
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+          OWNER: ${{ github.repository_owner }}
         run: |
-          npm version "${{ steps.version.outputs.version }}" --no-git-tag-version -w aspnetdesktop-client
-          npm pack -w aspnetdesktop-client --pack-destination artifacts
+          # Not `npm version`: it reinstalls the workspaces, and the samples' ^0.1.0 range doesn't match
+          # prereleases or later minors, so npm would try to fetch the client from the registry.
+          npm pkg set version="$VERSION" -w src/client
+          npm pack -w src/client --pack-destination artifacts
+          # GitHub Packages only hosts scoped npm packages.
+          npm pkg set name="@$OWNER/aspnetdesktop-client" -w src/client
+          npm pack -w src/client --pack-destination artifacts
 
       - uses: actions/upload-artifact@v7
         with:
@@ -80,9 +94,45 @@ jobs:
           path: artifacts/
           if-no-files-found: error
 
+  publish-github:
+    name: Publish to GitHub Packages
+    needs: package
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/download-artifact@v8
+        with:
+          name: release-packages
+          path: artifacts
+
+      - uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: 10.0.x
+
+      # GitHub Packages doesn't host symbol packages; the .snupkg files are attached to the GitHub Release instead.
+      - name: Push NuGet packages
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SOURCE: https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json
+        run: dotnet nuget push "artifacts/*.nupkg" --source "$SOURCE" --api-key "$GITHUB_TOKEN" --skip-duplicate --no-symbols
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          registry-url: https://npm.pkg.github.com
+
+      - name: Publish npm package
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          DIST_TAG: ${{ needs.package.outputs.prerelease == 'true' && 'next' || 'latest' }}
+        run: npm publish artifacts/${{ github.repository_owner }}-aspnetdesktop-client-*.tgz --tag "$DIST_TAG"
+
   publish-nuget:
     name: Publish to nuget.org
     needs: package
+    if: vars.PUBLISH_NUGET_ORG == 'true'
     runs-on: ubuntu-24.04
     environment: release
     permissions:
@@ -117,8 +167,9 @@ jobs:
           dotnet nuget push "artifacts/*.nupkg" --api-key "$NUGET_API_KEY" --source https://api.nuget.org/v3/index.json --skip-duplicate
 
   publish-npm:
-    name: Publish to npm
+    name: Publish to npmjs.com
     needs: package
+    if: vars.PUBLISH_NPMJS == 'true'
     runs-on: ubuntu-24.04
     environment: release
     permissions:
@@ -146,7 +197,9 @@ jobs:
 
   github-release:
     name: GitHub Release
-    needs: [package, publish-nuget, publish-npm]
+    needs: [package, publish-github, publish-nuget, publish-npm]
+    # The public registries are optional: skipped jobs don't block the release, failed ones do.
+    if: ${{ !cancelled() && needs.publish-github.result == 'success' && needs.publish-nuget.result != 'failure' && needs.publish-npm.result != 'failure' }}
     runs-on: ubuntu-24.04
     permissions:
       contents: write
@@ -161,6 +214,10 @@ jobs:
       - name: Extract release notes from CHANGELOG.md
         env:
           VERSION: ${{ needs.package.outputs.version }}
+          OWNER: ${{ github.repository_owner }}
+          REPOSITORY: ${{ github.event.repository.name }}
+          NUGET_ORG: ${{ needs.publish-nuget.result == 'success' }}
+          NPMJS: ${{ needs.publish-npm.result == 'success' }}
         run: |
           awk -v version="$VERSION" '
             $0 ~ "^## \\[" version "\\]" { found = 1; next }
@@ -168,13 +225,18 @@ jobs:
             found { print }
           ' CHANGELOG.md > release-notes.md
           if [ ! -s release-notes.md ]; then echo "See [CHANGELOG.md](CHANGELOG.md)." > release-notes.md; fi
-          cat >> release-notes.md <<EOF
-
-          ## Packages
-
-          - NuGet: [AspNetDesktop $VERSION](https://www.nuget.org/packages/AspNetDesktop/$VERSION), [AspNetDesktop.Templates $VERSION](https://www.nuget.org/packages/AspNetDesktop.Templates/$VERSION)
-          - npm: [aspnetdesktop-client@$VERSION](https://www.npmjs.com/package/aspnetdesktop-client/v/$VERSION)
-          EOF
+          {
+            echo
+            echo "## Packages"
+            echo
+            echo "- GitHub Packages: [NuGet and npm](https://github.com/$OWNER?tab=packages&repo_name=$REPOSITORY) ([setup](https://github.com/$OWNER/$REPOSITORY#install))"
+            if [ "$NUGET_ORG" = true ]; then
+              echo "- nuget.org: [AspNetDesktop $VERSION](https://www.nuget.org/packages/AspNetDesktop/$VERSION), [AspNetDesktop.Templates $VERSION](https://www.nuget.org/packages/AspNetDesktop.Templates/$VERSION)"
+            fi
+            if [ "$NPMJS" = true ]; then
+              echo "- npm: [aspnetdesktop-client@$VERSION](https://www.npmjs.com/package/aspnetdesktop-client/v/$VERSION)"
+            fi
+          } >> release-notes.md
 
       - uses: softprops/action-gh-release@v3
         with:

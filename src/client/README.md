@@ -4,6 +4,15 @@
 
 It is a **separate client**. It never wraps or replaces the global `fetch` or Angular's `HttpClient`; those keep doing real HTTP.
 
+## Install
+
+The package is on GitHub Packages as `@armanossiloko/aspnetdesktop-client`; install it under its usual name so the imports below work as written. GitHub Packages needs a token with `read:packages` (see [Install](https://github.com/armanossiloko/aspnet-desktop#install)).
+
+```bash
+echo "@armanossiloko:registry=https://npm.pkg.github.com" >> .npmrc
+npm install aspnetdesktop-client@npm:@armanossiloko/aspnetdesktop-client
+```
+
 | Import | For |
 |---|---|
 | `aspnetdesktop-client` | Any framework or none: `createDesktopHttpClient()` |

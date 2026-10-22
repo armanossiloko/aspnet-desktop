@@ -20,6 +20,12 @@
     <!-- No lib/ folder is expected in a template package. -->
     <NoWarn>$(NoWarn);NU5128</NoWarn>
     <TemplatesStagingDir>$(BaseIntermediateOutputPath)templates/</TemplatesStagingDir>
+    <!--
+      Where generated apps install aspnetdesktop-client from: npmjs, or github (GitHub Packages). GitHub Packages only
+      serves scoped packages, so there the dependency is an alias to @owner/aspnetdesktop-client and imports stay the same.
+    -->
+    <TemplateNpmRegistry Condition="'$(TemplateNpmRegistry)' == ''">npmjs</TemplateNpmRegistry>
+    <GitHubPackagesOwner>armanossiloko</GitHubPackagesOwner>
   </PropertyGroup>
 
   <ItemGroup>
@@ -33,6 +39,7 @@
       <Source ParameterType="System.String" Required="true" />
       <Destination ParameterType="System.String" Required="true" />
       <Version ParameterType="System.String" Required="true" />
+      <ClientDependency ParameterType="System.String" Required="true" />
     </ParameterGroup>
     <Task>
       <Using Namespace="System.IO" />
@@ -44,7 +51,7 @@
         {
             string text = File.ReadAllText(Source);
             text = Regex.Replace(text, "(<PackageReference Include=\"AspNetDesktop\" Version=\")[^\"]*(\")", "${1}" + Version + "${2}");
-            text = Regex.Replace(text, "(\"aspnetdesktop-client\": \")[^\"]*(\")", "${1}^" + Version + "${2}");
+            text = Regex.Replace(text, "(\"aspnetdesktop-client\": \")[^\"]*(\")", "${1}" + ClientDependency + "${2}");
             File.WriteAllText(Destination, text);
         }
         else
@@ -60,8 +67,16 @@
       <_TemplateFile Include="%(TemplateSource.SourceDir)**/*" Exclude="%(TemplateSource.SourceDir)bin/**;%(TemplateSource.SourceDir)obj/**;%(TemplateSource.SourceDir)wwwroot/**;%(TemplateSource.SourceDir)ClientApp/node_modules/**;%(TemplateSource.SourceDir)ClientApp/dist/**;%(TemplateSource.SourceDir)ClientApp/.angular/**;%(TemplateSource.SourceDir)**/*.user" TemplateName="%(TemplateSource.Identity)" />
     </ItemGroup>
 
+    <Error Condition="'$(TemplateNpmRegistry)' != 'npmjs' and '$(TemplateNpmRegistry)' != 'github'" Text="TemplateNpmRegistry must be 'npmjs' or 'github', not '$(TemplateNpmRegistry)'." />
+    <PropertyGroup>
+      <_TemplateClientDependency>^$(PackageVersion)</_TemplateClientDependency>
+      <_TemplateClientDependency Condition="'$(TemplateNpmRegistry)' == 'github'">npm:%40$(GitHubPackagesOwner)/aspnetdesktop-client@^$(PackageVersion)</_TemplateClientDependency>
+    </PropertyGroup>
+
     <RemoveDir Directories="$(TemplatesStagingDir)" />
-    <StageTemplateFile Source="%(_TemplateFile.FullPath)" Destination="$(TemplatesStagingDir)%(_TemplateFile.TemplateName)/%(_TemplateFile.RecursiveDir)%(_TemplateFile.Filename)%(_TemplateFile.Extension)" Version="$(PackageVersion)" />
+    <StageTemplateFile Source="%(_TemplateFile.FullPath)" Destination="$(TemplatesStagingDir)%(_TemplateFile.TemplateName)/%(_TemplateFile.RecursiveDir)%(_TemplateFile.Filename)%(_TemplateFile.Extension)" Version="$(PackageVersion)" ClientDependency="$(_TemplateClientDependency)" />
+    <!-- Route the scope to GitHub Packages; the read:packages token stays in the user's own ~/.npmrc. -->
+    <WriteLinesToFile Condition="'$(TemplateNpmRegistry)' == 'github'" File="$(TemplatesStagingDir)%(TemplateSource.Identity)/ClientApp/.npmrc" Lines="%40$(GitHubPackagesOwner):registry=https://npm.pkg.github.com" Overwrite="true" />
 
     <ItemGroup>
       <_StagedTemplateFile Include="$(TemplatesStagingDir)**/*" />
