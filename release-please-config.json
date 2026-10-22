@@ -1,6 +1,7 @@
 {
   "include-component-in-tag": true,
   "separate-pull-requests": true,
+  "always-update": true,
   "bump-minor-pre-major": true,
   "initial-version": "0.1.0",
   "packages": {
@@ -8,7 +9,9 @@
       "release-type": "simple",
       "component": "AspNetDesktop",
       "package-name": "AspNetDesktop",
-      "exclude-paths": ["src/client"]
+      "exclude-paths": [
+        "src/client"
+      ]
     },
     "src/client": {
       "release-type": "node",
