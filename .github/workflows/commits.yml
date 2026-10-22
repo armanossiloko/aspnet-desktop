@@ -11,7 +11,8 @@ permissions:
 
 concurrency:
   group: commits-${{ github.ref }}
-  cancel-in-progress: true
+  # Pull requests only: on master, a cancelled run would leave that push's commits unchecked.
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   commitlint:
