@@ -1,0 +1,12 @@
+<Project>
+  <!--
+    macOS app bundles only include files whose PublishFolderType the SDK can work out, and *.json isn't one of them:
+    appsettings*.json would be left out of the .app (warning "does not specify a 'PublishFolderType'"). Put them next
+    to the assemblies in Contents/MonoBundle, which is AppContext.BaseDirectory, so an app that sets
+    ContentRootPath = AppContext.BaseDirectory loads its configuration on macOS like on Windows and Linux.
+  -->
+  <ItemGroup Condition="'$(TargetPlatformIdentifier)' == 'macOS'">
+    <None Update="appsettings*.json" PublishFolderType="Assembly" />
+    <Content Update="appsettings*.json" PublishFolderType="Assembly" />
+  </ItemGroup>
+</Project>

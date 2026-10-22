@@ -5,7 +5,7 @@
     against app:// and ipc:// from JavaScript (using the real aspnetdesktop-client build), reports the results back over
     ipc:// and exits with 0 (pass) or 1 (fail). Requires `npm run build:client` first.
       Windows/Linux: dotnet run -project tests/AspNetDesktop.SmokeTests   (headless Linux: prefix with xvfb-run -a)
-      macOS:         run bin/<config>/net10.0-macos/<rid>/AspNetDesktop.SmokeTests.app/Contents/MacOS/AspNetDesktop.SmokeTests
+      macOS:         run bin/<config>/net10.0-macos/AspNetDesktop.SmokeTests.app/Contents/MacOS/AspNetDesktop.SmokeTests
   -->
   <PropertyGroup>
     <TargetFramework Condition="$([MSBuild]::IsOSPlatform('Windows'))">net10.0-windows</TargetFramework>
@@ -28,16 +28,20 @@
   <ItemGroup>
     <Using Include="Microsoft.AspNetCore.Builder" />
     <Using Include="Microsoft.AspNetCore.Http" />
+    <Using Include="Microsoft.Extensions.Configuration" />
     <Using Include="Microsoft.Extensions.DependencyInjection" />
     <Using Include="Microsoft.Extensions.Hosting" />
   </ItemGroup>
 
   <ItemGroup>
-    <!-- CopyToPublishDirectory also puts the files into the macOS .app bundle (Contents/MonoBundle). -->
+    <!-- Same as the templates: next to the executable (Contents/MonoBundle on macOS, via AspNetDesktop.Mac.targets). -->
+    <None Update="appsettings.json" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+    <!-- CopyToPublishDirectory also puts the files into the macOS .app bundle (Contents/Resources). -->
     <Content Include="wwwroot\**" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
     <Content Include="..\..\src\client\dist\**\*.js" Link="wwwroot\client\%(RecursiveDir)%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
   </ItemGroup>
 
   <Import Project="..\..\src\AspNetDesktop.Windows\buildTransitive\AspNetDesktop.Windows.targets" Condition="'$(TargetFramework)' == 'net10.0-windows'" />
+  <Import Project="..\..\src\AspNetDesktop.Mac\buildTransitive\AspNetDesktop.Mac.targets" Condition="'$(TargetFramework)' == 'net10.0-macos'" />
 
 </Project>

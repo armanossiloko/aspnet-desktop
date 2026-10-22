@@ -11,6 +11,7 @@
 
   <!-- A package reference would bring this in through buildTransitive; a project reference does not. -->
   <Import Project="$(AspNetDesktopRepoRoot)src/AspNetDesktop.Windows/buildTransitive/AspNetDesktop.Windows.targets" Condition="'$(TargetFramework)' == 'net10.0-windows'" />
+  <Import Project="$(AspNetDesktopRepoRoot)src/AspNetDesktop.Mac/buildTransitive/AspNetDesktop.Mac.targets" Condition="'$(TargetFramework)' == 'net10.0-macos'" />
 
   <ItemGroup>
     <_WorkspaceClientSource Include="$(AspNetDesktopRepoRoot)src/client/src/**/*.ts;$(AspNetDesktopRepoRoot)src/client/package.json;$(AspNetDesktopRepoRoot)src/client/tsconfig*.json" />

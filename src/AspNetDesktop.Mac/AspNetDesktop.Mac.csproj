@@ -25,6 +25,10 @@
     <ProjectReference Include="..\AspNetDesktop.Hosting\AspNetDesktop.Hosting.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Include="buildTransitive\AspNetDesktop.Mac.targets" Pack="true" PackagePath="buildTransitive\" />
+  </ItemGroup>
+
   <Target Name="AspNetDesktopWarnMacSkipped" BeforeTargets="Build" Condition="'$(AspNetDesktopBuildMac)' != 'true'">
     <Message Importance="high" Text="AspNetDesktop.Mac skipped: the 'macos' workload is not installed (dotnet workload install macos)." />
   </Target>

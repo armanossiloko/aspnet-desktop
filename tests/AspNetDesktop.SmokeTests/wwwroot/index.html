@@ -147,6 +147,10 @@
       await check('real HTTP fetch is untouched by the framework', async () => {
         assert(window.fetch.toString().includes('[native code]'), 'fetch was patched');
       });
+      await check('appsettings.json is loaded', async () => {
+        const config = await desktop.get('/api/config');
+        assert(config.value === 'loaded', JSON.stringify(config));
+      });
 
       window.__smokeReported = true;
       await fetch('ipc://localhost/api/report', {

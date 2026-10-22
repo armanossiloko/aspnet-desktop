@@ -53,6 +53,8 @@ app.MapPost("/api/report", (SmokeReport report) =>
     lifetime.StopApplication();
     return Results.NoContent();
 });
+// appsettings.json must ship next to the executable on every OS (inside the .app bundle on macOS).
+app.MapGet("/api/config", (IConfiguration configuration) => Results.Ok(new { value = configuration["Smoke:Config"] }));
 app.MapFallbackToFile("index.html");
 
 using CancellationTokenSource watchdog = new(timeout);
