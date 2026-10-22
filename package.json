@@ -13,7 +13,7 @@
     "build:samples": "npm run build:client && npm run build -w angular-app-client -w react-app-client",
     "start:angular": "npm start -w angular-app-client",
     "start:react": "npm start -w react-app-client",
-    "lint:commits": "commitlint --from origin/main --to HEAD --verbose"
+    "lint:commits": "commitlint --from origin/master --to HEAD --verbose"
   },
   "devDependencies": {
     "@commitlint/cli": "^21.2.4",

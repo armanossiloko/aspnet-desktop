@@ -68,7 +68,7 @@ Commit messages and pull request titles follow [Conventional Commits](https://ww
 - Write the description in the imperative, starting lowercase, without a trailing period: `fix(linux): read request bodies natively`. Keep the header within 100 characters.
 - Mark breaking changes with `!` before the colon (`feat(hosting)!: rename DesktopOptions`) and a `BREAKING CHANGE:` footer.
 
-`npm ci` installs a commit-msg hook ([husky](https://typicode.github.io/husky/) + [commitlint](https://commitlint.js.org/)) that rejects messages that aren't Conventional Commits and warns about style (subject case, header length). The **Conventional commits** check applies the same rules to pull requests. Squash merges use the pull request title as the commit message, so the title must follow the format too. `npm run lint:commits` checks every commit on your branch against `origin/main`.
+`npm ci` installs a commit-msg hook ([husky](https://typicode.github.io/husky/) + [commitlint](https://commitlint.js.org/)) that rejects messages that aren't Conventional Commits and warns about style (subject case, header length). The **Conventional commits** check applies the same rules to pull requests. Squash merges use the pull request title as the commit message, so the title must follow the format too. `npm run lint:commits` checks every commit on your branch against `origin/master`.
 
 ## Pull requests
 

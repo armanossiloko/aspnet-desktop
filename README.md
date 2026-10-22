@@ -3,7 +3,7 @@
 [![CI](https://github.com/armanossiloko/aspnet-desktop/actions/workflows/ci.yml/badge.svg)](https://github.com/armanossiloko/aspnet-desktop/actions/workflows/ci.yml)
 [![NuGet](https://img.shields.io/nuget/vpre/AspNetDesktop?logo=nuget&label=AspNetDesktop)](https://www.nuget.org/packages/AspNetDesktop)
 [![npm](https://img.shields.io/npm/v/aspnetdesktop-client?logo=npm&label=aspnetdesktop-client)](https://www.npmjs.com/package/aspnetdesktop-client)
-[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/armanossiloko/aspnet-desktop/blob/main/LICENSE)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/armanossiloko/aspnet-desktop/blob/master/LICENSE)
 
 Build desktop apps with an **ASP.NET Core backend** and **any JavaScript UI** (Angular, React, Vue, ...), Tauri-style — but with .NET instead of Rust, and with real MVC instead of `invoke('command')`.
 
@@ -57,7 +57,7 @@ app.MapFallbackToFile("index.html");
 app.RunDesktop();                  // opens the window; returns when it closes
 ```
 
-The target framework selects the adapter (see [docs/platforms.md](https://github.com/armanossiloko/aspnet-desktop/blob/main/docs/platforms.md) for runtime requirements):
+The target framework selects the adapter (see [docs/platforms.md](https://github.com/armanossiloko/aspnet-desktop/blob/master/docs/platforms.md) for runtime requirements):
 
 | Target framework | Adapter |
 |---|---|
@@ -75,7 +75,7 @@ The templates and samples pick the framework automatically:
 
 ## Two clients: real HTTP vs the in-process API
 
-The framework never patches `fetch` or Angular's `HttpClient`. Real HTTP stays real; the desktop API gets its own client from [`aspnetdesktop-client`](https://github.com/armanossiloko/aspnet-desktop/tree/main/src/client).
+The framework never patches `fetch` or Angular's `HttpClient`. Real HTTP stays real; the desktop API gets its own client from [`aspnetdesktop-client`](https://github.com/armanossiloko/aspnet-desktop/tree/master/src/client).
 
 **Angular**
 
@@ -231,7 +231,7 @@ CI runs all of these on Windows, Linux and macOS for every push and pull request
 
 ## Contributing
 
-Issues and pull requests are welcome. See [CONTRIBUTING.md](https://github.com/armanossiloko/aspnet-desktop/blob/main/CONTRIBUTING.md), and report security issues privately as described in [SECURITY.md](https://github.com/armanossiloko/aspnet-desktop/blob/main/SECURITY.md). Release notes are in [CHANGELOG.md](https://github.com/armanossiloko/aspnet-desktop/blob/main/CHANGELOG.md).
+Issues and pull requests are welcome. See [CONTRIBUTING.md](https://github.com/armanossiloko/aspnet-desktop/blob/master/CONTRIBUTING.md), and report security issues privately as described in [SECURITY.md](https://github.com/armanossiloko/aspnet-desktop/blob/master/SECURITY.md). Release notes are in [CHANGELOG.md](https://github.com/armanossiloko/aspnet-desktop/blob/master/CHANGELOG.md).
 
 ## Not in v1
 
@@ -239,4 +239,4 @@ WebSockets/SignalR (custom schemes don't upgrade to `ws:`; a postMessage transpo
 
 ## License
 
-MIT. See [LICENSE](https://github.com/armanossiloko/aspnet-desktop/blob/main/LICENSE).
+MIT. See [LICENSE](https://github.com/armanossiloko/aspnet-desktop/blob/master/LICENSE).

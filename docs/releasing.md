@@ -49,7 +49,7 @@ npm trusted publishing can only be configured once the package exists, so the fi
 
 ## Cutting a release
 
-1. Make sure `main` is green.
+1. Make sure `master` is green.
 2. Move the **Unreleased** entries in `CHANGELOG.md` under a new version heading and update the compare links at the bottom.
 3. Tag and push:
    ```bash
