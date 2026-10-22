@@ -24,13 +24,18 @@ Versions follow [SemVer](https://semver.org/spec/v2.0.0.html). Before 1.0, `feat
 
 Dependabot's commits use the `build(deps)` and `ci(deps)` prefixes, so dependency updates ship with the next release rather than triggering one. To release a dependency update on its own (e.g. a security fix), merge it and push a `fix(deps): ...` commit describing it.
 
-Between releases, CI builds the NuGet packages as previews of the next patch (`0.1.1-preview.0.5` is five commits after `AspNetDesktop-v0.1.0`, via [MinVer](https://github.com/adamralph/minver)) and uploads them as workflow artifacts. They are not published.
+Between releases, pushes to `master` that affect the packages build them as previews of the next patch (`0.1.1-preview.0.5` is five commits after `AspNetDesktop-v0.1.0`, via [MinVer](https://github.com/adamralph/minver)) and upload them as workflow artifacts. They are not published.
 
 ## Release PRs and CI
 
-Release PRs are opened by `github-actions[bot]` with the workflow's own `GITHUB_TOKEN`. GitHub creates their CI runs but holds them until a maintainer approves: on the PR, choose **Approve workflows to run** (or approve the runs from the Actions tab), then merge once the checks pass. Merging with *bypass rules* without running them is also safe: the Release workflow runs the full CI again before it publishes anything.
+CI doesn't build or test release PRs. They only change versions and changelogs, and the Release workflow runs the full CI before it publishes anything. Instead, each Release run reports the required **CI result** check on the open release PRs, so you can merge one as soon as you want to ship.
 
-To skip the approval step, give release-please a token whose PRs trigger workflows normally. Create a [fine-grained personal access token](https://github.com/settings/personal-access-tokens/new) for this repository with **Contents**, **Pull requests** and **Issues** set to read and write, then:
+- The `AspNetDesktop` release PR only touches release-please's files, which CI ignores, so no workflow runs for it at all.
+- The `aspnetdesktop-client` release PR also bumps the version in `src/client/package.json` and `package-lock.json`, so GitHub creates a CI run for it. Release PRs are opened by `github-actions[bot]` with the workflow's own `GITHUB_TOKEN`, and GitHub holds runs for such PRs until a maintainer approves them. You don't need to approve it; if you do, it skips every job.
+
+If anything besides versions and changelogs is pushed to a release PR, CI checks it like any other pull request, and the Release workflow no longer reports **CI result** for it.
+
+To have the client release PR's run start without waiting for approval, give release-please a token whose PRs trigger workflows normally. Create a [fine-grained personal access token](https://github.com/settings/personal-access-tokens/new) for this repository with **Contents**, **Pull requests** and **Issues** set to read and write, then:
 
 ```bash
 gh secret set RELEASE_PLEASE_TOKEN --repo armanossiloko/aspnet-desktop

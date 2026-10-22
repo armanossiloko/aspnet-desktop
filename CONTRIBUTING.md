@@ -69,7 +69,7 @@ Commit messages and pull request titles follow [Conventional Commits](https://ww
 - Mark breaking changes with `!` before the colon (`feat(hosting)!: rename DesktopOptions`) and a `BREAKING CHANGE:` footer.
 - The type decides what gets released: `feat`, `fix`, `perf` and breaking changes trigger a release of the component they touch (the npm client for `src/client`, the NuGet packages for everything else), and become its changelog entry. See [docs/releasing.md](docs/releasing.md).
 
-`npm ci` installs a commit-msg hook ([husky](https://typicode.github.io/husky/) + [commitlint](https://commitlint.js.org/)) that rejects messages that aren't Conventional Commits and warns about style (subject case, header length). The **Conventional commits** check applies the same rules to pull requests. Squash merges use the pull request title as the commit message, so the title must follow the format too. `npm run lint:commits` checks every commit on your branch against `origin/master`.
+`npm ci` installs a commit-msg hook ([husky](https://typicode.github.io/husky/) + [commitlint](https://commitlint.js.org/)) that rejects messages that aren't Conventional Commits and warns about style (subject case, header length). The **Conventional commits** check applies the same rules to pull requests. Squash merges use the pull request title as the commit message, so the title must follow the format too. Renaming a pull request doesn't start CI; to check the new title, re-run the failed jobs of its last CI run. `npm run lint:commits` checks every commit on your branch against `origin/master`.
 
 ## Pull requests
 
@@ -78,7 +78,7 @@ Commit messages and pull request titles follow [Conventional Commits](https://ww
 - Public APIs need XML docs. Builds treat warnings as errors.
 - Match the existing style (`.editorconfig`); file-scoped namespaces, explicit types where the codebase uses them.
 - Don't edit `CHANGELOG.md`: release-please writes the changelogs from commit messages, so describe user-visible changes in a `feat` or `fix` commit. See [docs/releasing.md](docs/releasing.md).
-- CI must be green on all three operating systems.
+- **CI result** must pass. CI runs only the jobs your changes affect: for example, a docs-only change runs just the commit check, and a change to the npm client skips the .NET builds. [`.github/scripts/affected-jobs.sh`](.github/scripts/affected-jobs.sh) decides, and files it doesn't recognise run everything.
 
 ## Releasing (maintainers)
 
