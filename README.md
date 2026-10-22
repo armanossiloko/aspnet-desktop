@@ -3,7 +3,7 @@
 [![CI](https://github.com/armanossiloko/aspnet-desktop/actions/workflows/ci.yml/badge.svg)](https://github.com/armanossiloko/aspnet-desktop/actions/workflows/ci.yml)
 [![NuGet](https://img.shields.io/nuget/vpre/AspNetDesktop?logo=nuget&label=AspNetDesktop)](https://www.nuget.org/packages/AspNetDesktop)
 [![npm](https://img.shields.io/npm/v/aspnetdesktop-client?logo=npm&label=aspnetdesktop-client)](https://www.npmjs.com/package/aspnetdesktop-client)
-[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/armanossiloko/aspnet-desktop/blob/master/LICENSE)
+[![License: MIT with attribution](https://img.shields.io/badge/license-MIT%20with%20attribution-blue.svg)](https://github.com/armanossiloko/aspnet-desktop/blob/master/LICENSE)
 
 Build desktop apps with an **ASP.NET Core backend** and **any JavaScript UI** (Angular, React, Vue, ...), Tauri-style — but with .NET instead of Rust, and with real MVC instead of `invoke('command')`.
 
@@ -268,4 +268,10 @@ WebSockets/SignalR (custom schemes don't upgrade to `ws:`; a postMessage transpo
 
 ## License
 
-MIT. See [LICENSE](https://github.com/armanossiloko/aspnet-desktop/blob/master/LICENSE).
+MIT with an attribution requirement. See [LICENSE](https://github.com/armanossiloko/aspnet-desktop/blob/master/LICENSE).
+
+You can use, modify and ship AspNetDesktop freely, including in commercial apps. Apps and projects that include it or are derived from it must credit **Arman Ossi Loko** where users can find it: in the documentation, on an About or credits screen, or in a third-party notices file. For example:
+
+> Built with [AspNetDesktop](https://github.com/armanossiloko/aspnet-desktop) by Arman Ossi Loko
+
+Apps created from the templates show this line in their footer.

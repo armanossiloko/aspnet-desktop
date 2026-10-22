@@ -5,7 +5,8 @@
   <PropertyGroup>
     <Authors>Arman Ossi Loko</Authors>
     <Copyright>Copyright (c) Arman Ossi Loko</Copyright>
-    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <!-- MIT with an attribution clause: not an SPDX license, so the file ships in the package. -->
+    <PackageLicenseFile>LICENSE</PackageLicenseFile>
     <PackageProjectUrl>https://github.com/armanossiloko/aspnet-desktop</PackageProjectUrl>
     <RepositoryUrl>https://github.com/armanossiloko/aspnet-desktop.git</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
@@ -41,6 +42,7 @@
 
   <ItemGroup>
     <None Include="$(AspNetDesktopRepoRoot)README.md" Pack="true" PackagePath="\" Visible="false" />
+    <None Include="$(AspNetDesktopRepoRoot)LICENSE" Pack="true" PackagePath="\" Visible="false" />
     <None Include="$(AspNetDesktopRepoRoot)assets/icon.png" Pack="true" PackagePath="\" Visible="false" />
   </ItemGroup>
 </Project>

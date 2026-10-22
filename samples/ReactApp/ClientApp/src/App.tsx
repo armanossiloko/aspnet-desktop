@@ -178,6 +178,10 @@ export function App() {
           )}
         </article>
       </section>
+
+      <footer className="credit">
+        Built with <a href="https://github.com/armanossiloko/aspnet-desktop" target="_blank" rel="noopener">AspNetDesktop</a> by Arman Ossi Loko
+      </footer>
     </main>
   );
 }

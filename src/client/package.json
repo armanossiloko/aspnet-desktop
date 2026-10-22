@@ -2,7 +2,7 @@
   "name": "aspnetdesktop-client",
   "version": "0.1.0",
   "description": "DesktopHttpClient: isolated, HTTP-shaped calls from the WebView UI to the in-process ASP.NET Core API over ipc://localhost, with Angular, React and Vue integrations. Never touches the global fetch or Angular's HttpClient.",
-  "license": "MIT",
+  "license": "SEE LICENSE IN LICENSE",
   "author": "Arman Ossi Loko",
   "homepage": "https://github.com/armanossiloko/aspnet-desktop/tree/master/src/client#readme",
   "repository": {
