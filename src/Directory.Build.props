@@ -5,8 +5,7 @@
   <PropertyGroup>
     <Authors>Arman Ossi Loko</Authors>
     <Copyright>Copyright (c) Arman Ossi Loko</Copyright>
-    <!-- MIT with an attribution clause: not an SPDX license, so the file ships in the package. -->
-    <PackageLicenseFile>LICENSE</PackageLicenseFile>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageProjectUrl>https://github.com/armanossiloko/aspnet-desktop</PackageProjectUrl>
     <RepositoryUrl>https://github.com/armanossiloko/aspnet-desktop</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
