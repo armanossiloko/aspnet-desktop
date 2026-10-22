@@ -53,15 +53,21 @@
     <Exec Command="npm install" WorkingDirectory="$(ClientAppDir)" Condition="'$(ClientAppSkipInstall)' != 'true' and !Exists('$(ClientAppDir)node_modules')" />
     <Exec Command="npm run build" WorkingDirectory="$(ClientAppDir)" />
 
+    <!--
+      wwwroot was globbed when the project was evaluated. Drop those items before deleting the files: a wildcard
+      Remove only matches files that still exist, and the bundle file names change with every UI change.
+    -->
+    <ItemGroup>
+      <Content Remove="wwwroot\**" />
+    </ItemGroup>
     <RemoveDir Directories="$(MSBuildProjectDirectory)/wwwroot" />
     <ItemGroup>
       <ClientAppDistFile Include="$(ClientAppDist)**/*" />
     </ItemGroup>
     <Copy SourceFiles="@(ClientAppDistFile)" DestinationFiles="@(ClientAppDistFile->'$(MSBuildProjectDirectory)/wwwroot/%(RecursiveDir)%(Filename)%(Extension)')" />
 
-    <!-- wwwroot was globbed when the project was evaluated; pick up the fresh build output. -->
+    <!-- Pick up the fresh build output. -->
     <ItemGroup>
-      <Content Remove="wwwroot\**" />
       <Content Include="wwwroot\**" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
     </ItemGroup>
   </Target>
