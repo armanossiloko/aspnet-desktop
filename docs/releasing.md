@@ -28,9 +28,9 @@ Between releases, CI builds the NuGet packages as previews of the next patch (`0
 
 ## Release PRs and CI
 
-Release PRs opened with the workflow's own `GITHUB_TOKEN` don't trigger other workflows, so they get no CI checks and the `master` ruleset blocks them until an admin merges with *bypass rules*. That's safe: the Release workflow runs the full CI again before it publishes anything.
+Release PRs are opened by `github-actions[bot]` with the workflow's own `GITHUB_TOKEN`. GitHub creates their CI runs but holds them until a maintainer approves: on the PR, choose **Approve workflows to run** (or approve the runs from the Actions tab), then merge once the checks pass. Merging with *bypass rules* without running them is also safe: the Release workflow runs the full CI again before it publishes anything.
 
-To get CI on release PRs instead, give release-please a token that can trigger workflows. Create a [fine-grained personal access token](https://github.com/settings/personal-access-tokens/new) for this repository with **Contents**, **Pull requests** and **Issues** set to read and write, then:
+To skip the approval step, give release-please a token whose PRs trigger workflows normally. Create a [fine-grained personal access token](https://github.com/settings/personal-access-tokens/new) for this repository with **Contents**, **Pull requests** and **Issues** set to read and write, then:
 
 ```bash
 gh secret set RELEASE_PLEASE_TOKEN --repo armanossiloko/aspnet-desktop
