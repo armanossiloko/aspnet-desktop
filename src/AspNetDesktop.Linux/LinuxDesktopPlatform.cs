@@ -280,54 +280,105 @@ public sealed partial class LinuxDesktopPlatform : IDesktopPlatform
         }
     }
 
+    // Only top-level navigations are policed, like on Windows and macOS. WebKitGTK raises the same navigation-action
+    // decision for iframes and doesn't say which frame it's for, so anything a frame can load is checked at the
+    // response instead, where it does. Other schemes (mailto:, tel:, app deep links) never load in a frame and are
+    // handled at navigation time.
     private bool OnDecidePolicy(WebKit.WebView sender, WebKit.WebView.DecidePolicySignalArgs args)
     {
-        if (args.DecisionType is not (WebKit.PolicyDecisionType.NavigationAction or WebKit.PolicyDecisionType.NewWindowAction)
-            || args.Decision is not WebKit.NavigationPolicyDecision decision)
+        switch (args.DecisionType)
         {
-            return false;
+            case WebKit.PolicyDecisionType.NewWindowAction when args.Decision is WebKit.NavigationPolicyDecision newWindow:
+                return DecideNewWindow(sender, newWindow);
+            case WebKit.PolicyDecisionType.NavigationAction when args.Decision is WebKit.NavigationPolicyDecision navigation:
+                return DecideNavigation(navigation);
+            case WebKit.PolicyDecisionType.Response when args.Decision is WebKit.ResponsePolicyDecision response:
+                return DecideResponse(response);
+            default:
+                return false;
         }
+    }
 
-        string? target = decision.GetNavigationAction().GetRequest().GetUri();
-        if (!Uri.TryCreate(target, UriKind.Absolute, out Uri? uri))
+    private bool DecideNewWindow(WebKit.WebView webView, WebKit.NavigationPolicyDecision decision)
+    {
+        decision.Ignore();
+        if (!Uri.TryCreate(decision.GetNavigationAction().GetRequest().GetUri(), UriKind.Absolute, out Uri? uri))
         {
-            decision.Ignore();
             return true;
         }
 
         DesktopNavigationDecision verdict = _context!.Settings.EvaluateNavigation(uri);
         if (verdict == DesktopNavigationDecision.Allow)
         {
-            if (args.DecisionType == WebKit.PolicyDecisionType.NewWindowAction)
-            {
-                // Single-window host: open UI links in place.
-                decision.Ignore();
-                sender.LoadUri(uri.AbsoluteUri);
-                return true;
-            }
-
-            return false;
-        }
-
-        decision.Ignore();
-        if (verdict == DesktopNavigationDecision.OpenExternal)
-        {
-            try
-            {
-                Gio.Functions.AppInfoLaunchDefaultForUri(uri.AbsoluteUri, null);
-            }
-            catch (Exception ex)
-            {
-                LogOpenExternalFailed(_logger, ex, uri);
-            }
+            // Single-window host: open UI links in place.
+            webView.LoadUri(uri.AbsoluteUri);
         }
         else
         {
-            LogNavigationBlocked(_logger, uri);
+            HandleOffOrigin(uri, verdict);
         }
 
         return true;
     }
+
+    private bool DecideNavigation(WebKit.NavigationPolicyDecision decision)
+    {
+        if (!Uri.TryCreate(decision.GetNavigationAction().GetRequest().GetUri(), UriKind.Absolute, out Uri? uri))
+        {
+            decision.Ignore();
+            return true;
+        }
+
+        DesktopNavigationDecision verdict = _context!.Settings.EvaluateNavigation(uri);
+        if (verdict == DesktopNavigationDecision.Allow || IsFrameLoadable(uri))
+        {
+            return false;
+        }
+
+        decision.Ignore();
+        HandleOffOrigin(uri, verdict);
+        return true;
+    }
+
+    private bool DecideResponse(WebKit.ResponsePolicyDecision decision)
+    {
+        if (!decision.IsMainFrameMainResource()
+            || !Uri.TryCreate(decision.GetRequest().GetUri(), UriKind.Absolute, out Uri? uri))
+        {
+            return false;
+        }
+
+        DesktopNavigationDecision verdict = _context!.Settings.EvaluateNavigation(uri);
+        if (verdict == DesktopNavigationDecision.Allow)
+        {
+            return false;
+        }
+
+        decision.Ignore();
+        HandleOffOrigin(uri, verdict);
+        return true;
+    }
+
+    private void HandleOffOrigin(Uri uri, DesktopNavigationDecision verdict)
+    {
+        if (verdict != DesktopNavigationDecision.OpenExternal)
+        {
+            LogNavigationBlocked(_logger, uri);
+            return;
+        }
+
+        try
+        {
+            Gio.Functions.AppInfoLaunchDefaultForUri(uri.AbsoluteUri, null);
+        }
+        catch (Exception ex)
+        {
+            LogOpenExternalFailed(_logger, ex, uri);
+        }
+    }
+
+    private static bool IsFrameLoadable(Uri uri) =>
+        uri.Scheme is "http" or "https" or "data" or "blob" or "about" or "file" or DesktopSchemes.App or DesktopSchemes.Ipc;
 
     private static string? CreateApplicationId(string title)
     {

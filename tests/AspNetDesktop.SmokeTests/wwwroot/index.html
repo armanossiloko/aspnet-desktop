@@ -151,6 +151,27 @@
         const config = await desktop.get('/api/config');
         assert(config.value === 'loaded', JSON.stringify(config));
       });
+      await check('iframes are not policed like top-level navigations', async () => {
+        const within = (promise, what) =>
+          Promise.race([promise, new Promise((_, reject) => setTimeout(() => reject(new Error(`${what} timed out`)), 5000))]);
+
+        const srcdoc = document.createElement('iframe');
+        srcdoc.srcdoc = '<p id="probe">srcdoc ok</p>';
+        const srcdocLoaded = new Promise((resolve) => srcdoc.addEventListener('load', resolve, { once: true }));
+        document.body.append(srcdoc);
+        await within(srcdocLoaded, 'srcdoc iframe');
+        assert(srcdoc.contentDocument?.getElementById('probe')?.textContent === 'srcdoc ok', 'srcdoc iframe was blocked');
+
+        const reported = new Promise((resolve) =>
+          window.addEventListener('message', (event) => event.data === 'data-frame-loaded' && resolve()));
+        const data = document.createElement('iframe');
+        data.src = 'data:text/html,' + encodeURIComponent("<script>parent.postMessage('data-frame-loaded', '*')<\/script>");
+        document.body.append(data);
+        await within(reported, 'data: iframe');
+
+        srcdoc.remove();
+        data.remove();
+      });
 
       window.__smokeReported = true;
       await fetch('ipc://localhost/api/report', {
