@@ -230,11 +230,12 @@ jobs:
           node-version: 22
           registry-url: https://npm.pkg.github.com
 
+      # Without the ./, npm reads artifacts/<file>.tgz as a GitHub user/repo and tries to clone it.
       - name: Publish
         env:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           DIST_TAG: ${{ contains(needs.release-please.outputs.client-version, '-') && 'next' || 'latest' }}
-        run: npm publish artifacts/${{ github.repository_owner }}-aspnetdesktop-client-*.tgz --tag "$DIST_TAG"
+        run: npm publish ./artifacts/${{ github.repository_owner }}-aspnetdesktop-client-*.tgz --tag "$DIST_TAG"
 
       - name: Attach to the GitHub Release
         env:
@@ -306,4 +307,4 @@ jobs:
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
           DIST_TAG: ${{ contains(needs.release-please.outputs.client-version, '-') && 'next' || 'latest' }}
-        run: npm publish artifacts/aspnetdesktop-client-*.tgz --access public --provenance --tag "$DIST_TAG"
+        run: npm publish ./artifacts/aspnetdesktop-client-*.tgz --access public --provenance --tag "$DIST_TAG"
