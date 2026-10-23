@@ -2,7 +2,8 @@
 
 [![CI](https://github.com/armanossiloko/aspnet-desktop/actions/workflows/ci.yml/badge.svg)](https://github.com/armanossiloko/aspnet-desktop/actions/workflows/ci.yml)
 [![Release](https://img.shields.io/github/v/release/armanossiloko/aspnet-desktop?include_prereleases&logo=github&label=release)](https://github.com/armanossiloko/aspnet-desktop/releases)
-[![Packages: GitHub Packages](https://img.shields.io/badge/packages-GitHub%20Packages-24292f?logo=github)](https://github.com/armanossiloko?tab=packages&repo_name=aspnet-desktop)
+[![NuGet](https://img.shields.io/nuget/v/AspNetDesktop?logo=nuget&label=nuget)](https://www.nuget.org/packages/AspNetDesktop)
+[![npm](https://img.shields.io/npm/v/aspnetdesktop-client?logo=npm)](https://www.npmjs.com/package/aspnetdesktop-client)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/armanossiloko/aspnet-desktop/blob/master/LICENSE)
 
 Build desktop apps with an **ASP.NET Core backend** and **any JavaScript UI** (Angular, React, Vue, ...), Tauri-style — but with .NET instead of Rust, and with real MVC instead of `invoke('command')`.
@@ -29,18 +30,13 @@ flowchart LR
 
 ## Get started
 
-### Install
+### Prerequisites
 
-The packages are on [GitHub Packages](https://github.com/armanossiloko?tab=packages&repo_name=aspnet-desktop) for now; nuget.org and npm will follow. GitHub Packages needs a token even for public packages, so once per machine:
-
-1. Create a [personal access token (classic)](https://github.com/settings/tokens/new?scopes=read:packages&description=AspNetDesktop%20packages) with the `read:packages` scope.
-2. Register it with NuGet and npm:
-
-   ```bash
-   # On Windows you can leave out --store-password-in-clear-text (the password is encrypted there).
-   dotnet nuget add source https://nuget.pkg.github.com/armanossiloko/index.json --name aspnetdesktop --username <github-user> --password <token> --store-password-in-clear-text
-   npm config set //npm.pkg.github.com/:_authToken <token>
-   ```
+- [.NET 10 SDK](https://dotnet.microsoft.com/download/dotnet/10.0) and [Node.js](https://nodejs.org/) 22 or later.
+- The system WebView for your OS (see [docs/platforms.md](https://github.com/armanossiloko/aspnet-desktop/blob/master/docs/platforms.md)):
+  - **Windows**: the WebView2 Runtime, already installed on Windows 11 and current Windows 10.
+  - **macOS** 14+: `dotnet workload install macos` and the Xcode version that workload asks for.
+  - **Linux**: GTK 4 and WebKitGTK 6, e.g. `sudo apt install libgtk-4-1 libwebkitgtk-6.0-4` on Ubuntu 24.04+.
 
 ### Create an app
 
@@ -53,17 +49,21 @@ cd MyApp
 dotnet run -c Release                           # builds the UI into wwwroot and opens the window
 ```
 
+For hot reload while you work, run the dev server and the app side by side:
+
+```bash
+cd ClientApp && npm install && npm start        # Vite on :5173 (Angular: ng serve on :4200)
+dotnet run                                      # from MyApp, in a second terminal: the window loads the dev server
+```
+
 **In an existing project**:
 
 ```bash
 dotnet add package AspNetDesktop
-
-# In your frontend: route the @armanossiloko scope to GitHub Packages, then install under the usual name.
-echo "@armanossiloko:registry=https://npm.pkg.github.com" >> .npmrc
-npm install aspnetdesktop-client@npm:@armanossiloko/aspnetdesktop-client
+npm install aspnetdesktop-client                # in your frontend
 ```
 
-Apps created from the templates already have that `.npmrc` and dependency.
+The packages are on [nuget.org](https://www.nuget.org/packages?q=AspNetDesktop) and [npm](https://www.npmjs.com/package/aspnetdesktop-client), and also on [GitHub Packages](https://github.com/armanossiloko?tab=packages&repo_name=aspnet-desktop).
 
 ```csharp
 var builder = WebApplication.CreateBuilder(args);
@@ -213,7 +213,7 @@ If your app is started from another working directory, `AddDesktopHost()` falls 
 
 ## Packages
 
-All packages are published to [GitHub Packages](https://github.com/armanossiloko?tab=packages&repo_name=aspnet-desktop) (see [Install](#install)); the npm client is `@armanossiloko/aspnetdesktop-client` there, installed as `aspnetdesktop-client`.
+The NuGet packages are on [nuget.org](https://www.nuget.org/packages?q=AspNetDesktop) and the client is on [npm](https://www.npmjs.com/package/aspnetdesktop-client). Every release also goes to [GitHub Packages](https://github.com/armanossiloko?tab=packages&repo_name=aspnet-desktop), where the client is scoped as `@armanossiloko/aspnetdesktop-client` and you need a token with `read:packages` to install it.
 
 | Package | |
 |---|---|

@@ -47,7 +47,12 @@ gh secret set RELEASE_PLEASE_TOKEN --repo armanossiloko/aspnet-desktop
 
 Nothing to set up: the workflow publishes with its own `GITHUB_TOKEN`. Packages are linked to this repository through `RepositoryUrl` (NuGet) and `repository` (npm), and are public because the repository is.
 
-- **Consumers need a token** with `read:packages`, even for public packages. The README's [Install](../README.md#install) section shows the one-time setup.
+- **Consumers need a token** with `read:packages`, even for public packages. Once per machine, create a [personal access token (classic)](https://github.com/settings/tokens/new?scopes=read:packages&description=AspNetDesktop%20packages) with that scope and register it:
+  ```bash
+  # On Windows you can leave out --store-password-in-clear-text (the password is encrypted there).
+  dotnet nuget add source https://nuget.pkg.github.com/armanossiloko/index.json --name aspnetdesktop --username <github-user> --password <token> --store-password-in-clear-text
+  npm config set //npm.pkg.github.com/:_authToken <token>
+  ```
 - **npm names must be scoped** on GitHub Packages, so the client is published as `@armanossiloko/aspnetdesktop-client`. Apps install it under its usual name with an alias (`"aspnetdesktop-client": "npm:@armanossiloko/aspnetdesktop-client@^x.y.z"`), so imports don't change. While `PUBLISH_NPMJS` is off, the templates are packed that way, with a `ClientApp/.npmrc` that routes the scope to GitHub Packages.
 - **No symbol server**: GitHub Packages doesn't host `.snupkg` files. They're attached to the GitHub Release, and Source Link still maps to the sources.
 
@@ -60,7 +65,14 @@ gh variable set PUBLISH_NUGET_ORG --repo armanossiloko/aspnet-desktop --body tru
 gh variable set PUBLISH_NPMJS --repo armanossiloko/aspnet-desktop --body true
 ```
 
-With `PUBLISH_NPMJS` on, the templates reference `aspnetdesktop-client` from npmjs.com again (no alias, no `.npmrc`). Afterwards, point the README's Install section and badges at the public registries.
+With `PUBLISH_NPMJS` on, the templates reference `aspnetdesktop-client` from npmjs.com again (no alias, no `.npmrc`), so the client has to be on npmjs.com before the next NuGet release goes out. To put releases that already exist on a newly enabled registry, publish them again, the client first:
+
+```bash
+gh workflow run release.yml --repo armanossiloko/aspnet-desktop -f publish=aspnetdesktop-client
+gh workflow run release.yml --repo armanossiloko/aspnet-desktop -f publish=AspNetDesktop
+```
+
+Versions that are already on a registry are skipped.
 
 These publish jobs run in the `release` environment, which only accepts deployments from `master`.
 
@@ -92,7 +104,7 @@ When `NUGET_USER` is set, the workflow uses trusted publishing; otherwise it fal
 
 npm trusted publishing can only be configured once the package exists, so the first npmjs.com release needs a token:
 
-1. On npmjs.com create a **granular access token** with read and write access to packages and scopes (enable *Bypass two-factor authentication* if your account requires 2FA for publishing), then:
+1. On npmjs.com, go to your avatar → **Access Tokens** → **Generate New Token**, and create a token with *Bypass two-factor authentication* enabled, **Packages and scopes** set to *Read and write* for *All packages* (the package doesn't exist yet, so you can't select it), no organizations, and a short expiration. Then:
    ```bash
    gh secret set NPM_TOKEN --repo armanossiloko/aspnet-desktop --env release
    ```
