@@ -6,6 +6,13 @@ WebApplicationBuilder builder = WebApplication.CreateBuilder(new WebApplicationO
     Args = args,
     // Desktop apps can be launched from any working directory: load appsettings and wwwroot from the install folder.
     ContentRootPath = AppContext.BaseDirectory,
+    // Release builds always show the built UI from app://, even when a launch profile sets Development
+    // (which would load Desktop:DevServerUrl instead).
+//-:cnd:noEmit
+#if !DEBUG
+    EnvironmentName = Environments.Production,
+#endif
+//+:cnd:noEmit
 });
 
 builder.AddDesktopHost();          // replaces Kestrel; no TCP bind

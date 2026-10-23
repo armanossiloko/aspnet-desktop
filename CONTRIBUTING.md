@@ -69,8 +69,16 @@ If you change an adapter, run the smoke test on that OS.
 The samples double as the `dotnet new` templates (`samples/*/.template.config`). Inside this repository, `samples/Directory.Build.targets` points them at the source projects and the npm workspace; the templates package (`templates/AspNetDesktop.Templates`) copies them without that file and stamps the package version in.
 
 ```bash
-dotnet run --project samples/AngularApp -c Release --launch-profile "AngularApp (app://)"
+dotnet run --project samples/AngularApp -c Release              # built UI from app://
 npm run start:react & dotnet run --project samples/ReactApp     # Debug + Vite hot reload (same for start:vue / VueApp)
+```
+
+`dotnet new` evaluates `#if` in `.cs` files as its own template conditions and strips the directives from the generated app. Wrap real preprocessor directives in `//-:cnd:noEmit` and `//+:cnd:noEmit` lines (see `Program.cs`), and don't write that marker anywhere else in a template file, comments included. To check the output, pack the templates and instantiate one:
+
+```bash
+dotnet pack templates/AspNetDesktop.Templates -c Release -o artifacts -p:SkipClientBuild=true
+dotnet new install ./artifacts/AspNetDesktop.Templates.*.nupkg --debug:custom-hive /tmp/template-hive
+dotnet new aspnetdesktop-vue -o /tmp/MyApp --debug:custom-hive /tmp/template-hive
 ```
 
 ## Commit messages
