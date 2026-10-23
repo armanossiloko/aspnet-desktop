@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.1](https://github.com/armanossiloko/aspnet-desktop/compare/aspnetdesktop-client-v0.1.0...aspnetdesktop-client-v0.1.1) (2026-10-23)
+
+
+### Documentation
+
+* **client:** introduce the package and start from the templates ([#13](https://github.com/armanossiloko/aspnet-desktop/issues/13)) ([a36c1cd](https://github.com/armanossiloko/aspnet-desktop/commit/a36c1cd2da86aaf0fd9090381cf0bbd41c310b1b))
+
 ## 0.1.0 (2026-10-22)
 
 
