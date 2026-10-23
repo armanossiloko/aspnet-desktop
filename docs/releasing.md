@@ -108,7 +108,7 @@ npm trusted publishing can only be configured once the package exists, so the fi
    ```bash
    gh secret set NPM_TOKEN --repo armanossiloko/aspnet-desktop --env release
    ```
-2. After the first release, open the package on npmjs.com → **Settings** → **Trusted Publisher** → GitHub Actions with owner `armanossiloko`, repository `aspnet-desktop`, workflow `release.yml`, environment `release`. Then delete the `NPM_TOKEN` secret and, optionally, set the package to require 2FA and disallow tokens.
+2. A new trusted publisher expires unless a publish uses it within 2 days, and publishing an existing version again doesn't count (it's skipped). So add it just before you merge the next client release PR: open the package on npmjs.com → **Settings** → **Trusted Publisher** → GitHub Actions with owner `armanossiloko`, repository `aspnet-desktop`, workflow `release.yml`, environment `release`. npm prefers trusted publishing over the token when both are set. Once that release is out, delete the `NPM_TOKEN` secret and the token, and optionally set the package to require 2FA and disallow tokens. If the configuration expired, delete it and add it again.
 
 ## When something fails
 
