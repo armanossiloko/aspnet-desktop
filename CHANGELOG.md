@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.2](https://github.com/armanossiloko/aspnet-desktop/compare/AspNetDesktop-v0.1.1...AspNetDesktop-v0.1.2) (2026-10-23)
+
+
+### Documentation
+
+* tighten the README for people trying AspNetDesktop ([#12](https://github.com/armanossiloko/aspnet-desktop/issues/12)) ([1ace38f](https://github.com/armanossiloko/aspnet-desktop/commit/1ace38fc29cff3438d62423dc368748761e65b70))
+
 ## [0.1.1](https://github.com/armanossiloko/aspnet-desktop/compare/AspNetDesktop-v0.1.0...AspNetDesktop-v0.1.1) (2026-10-22)
 
 
