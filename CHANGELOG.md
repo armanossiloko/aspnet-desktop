@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.3](https://github.com/armanossiloko/aspnet-desktop/compare/AspNetDesktop-v0.1.2...AspNetDesktop-v0.1.3) (2026-10-23)
+
+
+### Bug Fixes
+
+* **templates:** show the built UI for dotnet run -c Release ([#16](https://github.com/armanossiloko/aspnet-desktop/issues/16)) ([cc79cb2](https://github.com/armanossiloko/aspnet-desktop/commit/cc79cb2be0def1051b0983ab1ce569ceac43cb42))
+
 ## [0.1.2](https://github.com/armanossiloko/aspnet-desktop/compare/AspNetDesktop-v0.1.1...AspNetDesktop-v0.1.2) (2026-10-23)
 
 
