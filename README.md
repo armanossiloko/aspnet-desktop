@@ -40,7 +40,7 @@ flowchart LR
 
 ### Create an app
 
-**From a template** (Angular, React or Vue, with the build wiring and hot reload set up):
+The templates (Angular, React or Vue) come with the build wiring and hot reload set up:
 
 ```bash
 dotnet new install AspNetDesktop.Templates
@@ -56,14 +56,12 @@ cd ClientApp && npm install && npm start        # Vite on :5173 (Angular: ng ser
 dotnet run                                      # from MyApp, in a second terminal: the window loads the dev server
 ```
 
-**In an existing project**:
+### Add to an existing project
 
 ```bash
 dotnet add package AspNetDesktop
 npm install aspnetdesktop-client                # in your frontend
 ```
-
-The packages are on [nuget.org](https://www.nuget.org/packages?q=AspNetDesktop) and [npm](https://www.npmjs.com/package/aspnetdesktop-client), and also on [GitHub Packages](https://github.com/armanossiloko?tab=packages&repo_name=aspnet-desktop).
 
 ```csharp
 var builder = WebApplication.CreateBuilder(args);
@@ -77,15 +75,7 @@ app.MapFallbackToFile("index.html");
 app.RunDesktop();                  // opens the window; returns when it closes
 ```
 
-The target framework selects the adapter (see [docs/platforms.md](https://github.com/armanossiloko/aspnet-desktop/blob/master/docs/platforms.md) for runtime requirements):
-
-| Target framework | Adapter |
-|---|---|
-| `net10.0-windows` | WinForms + **WebView2** |
-| `net10.0-macos` | `NSWindow` + **WKWebView** (`WKURLSchemeHandler`) |
-| `net10.0` (Linux) | GTK 4 + **WebKitGTK 6** via GirCore |
-
-The templates and samples pick the framework automatically:
+The target framework selects the adapter: `net10.0-windows` uses WebView2, `net10.0-macos` uses WKWebView, and `net10.0` on Linux uses WebKitGTK 6 ([platform notes](https://github.com/armanossiloko/aspnet-desktop/blob/master/docs/platforms.md)). The templates pick it per OS like this:
 
 ```xml
 <TargetFramework Condition="$([MSBuild]::IsOSPlatform('Windows'))">net10.0-windows</TargetFramework>
@@ -213,80 +203,25 @@ If your app is started from another working directory, `AddDesktopHost()` falls 
 
 ## Packages
 
-The NuGet packages are on [nuget.org](https://www.nuget.org/packages?q=AspNetDesktop) and the client is on [npm](https://www.npmjs.com/package/aspnetdesktop-client). Every release also goes to [GitHub Packages](https://github.com/armanossiloko?tab=packages&repo_name=aspnet-desktop), where the client is scoped as `@armanossiloko/aspnetdesktop-client` and you need a token with `read:packages` to install it.
-
 | Package | |
 |---|---|
-| `AspNetDesktop` | Metapackage: Hosting + the adapter for your target framework, and `app.RunDesktop()` |
-| `AspNetDesktop.Hosting` | `DesktopServer`, options, isolation policy, `AddDesktopHost()`, `CreateClient()`; no UI dependencies |
-| `AspNetDesktop.Windows` / `.Mac` / `.Linux` | Platform adapters |
-| `AspNetDesktop.Templates` | `dotnet new aspnetdesktop-angular`, `aspnetdesktop-react` and `aspnetdesktop-vue` |
-| `aspnetdesktop-client` | `DesktopHttpClient` for Angular, a provider and hook for React, a plugin and composable for Vue, and `createDesktopHttpClient()` for everything else |
+| [`AspNetDesktop`](https://www.nuget.org/packages/AspNetDesktop) | Metapackage: Hosting + the adapter for your target framework, and `app.RunDesktop()` |
+| [`AspNetDesktop.Hosting`](https://www.nuget.org/packages/AspNetDesktop.Hosting) | `DesktopServer`, options, isolation policy, `AddDesktopHost()`, `CreateClient()`; no UI dependencies |
+| [`AspNetDesktop.Windows`](https://www.nuget.org/packages/AspNetDesktop.Windows) / [`.Mac`](https://www.nuget.org/packages/AspNetDesktop.Mac) / [`.Linux`](https://www.nuget.org/packages/AspNetDesktop.Linux) | Platform adapters |
+| [`AspNetDesktop.Templates`](https://www.nuget.org/packages/AspNetDesktop.Templates) | `dotnet new aspnetdesktop-angular`, `aspnetdesktop-react` and `aspnetdesktop-vue` |
+| [`aspnetdesktop-client`](https://www.npmjs.com/package/aspnetdesktop-client) (npm) | `DesktopHttpClient` for Angular, a provider and hook for React, a plugin and composable for Vue, and `createDesktopHttpClient()` for everything else |
 
-## Repository layout
+Every release is also on [GitHub Packages](https://github.com/armanossiloko?tab=packages&repo_name=aspnet-desktop), where the client is scoped as `@armanossiloko/aspnetdesktop-client`.
 
-```
-src/
-  AspNetDesktop.Hosting/      IServer, options, policy, AddDesktopHost, CreateClient, RunDesktop(platform)
-  AspNetDesktop.Windows/      net10.0-windows: WinForms + WebView2
-  AspNetDesktop.Mac/          net10.0-macos: NSWindow + WKWebView
-  AspNetDesktop.Linux/        net10.0: GTK 4 + WebKitGTK 6 (GirCore)
-  AspNetDesktop/              metapackage: RunDesktop() picks the adapter for the target framework
-  client/                     aspnetdesktop-client (core client + Angular, React and Vue integrations)
-samples/
-  AngularApp/                 Angular 22 + [ApiController] + minimal API   (also the aspnetdesktop-angular template)
-  ReactApp/                   React 19 + Vite + the same API               (also the aspnetdesktop-react template)
-  VueApp/                     Vue 3 + Vite + the same API                  (also the aspnetdesktop-vue template)
-templates/
-  AspNetDesktop.Templates/    packs the samples as dotnet new templates
-tests/
-  AspNetDesktop.Hosting.Tests/   pipeline + security tests through CreateClient (no WebView)
-  AspNetDesktop.SmokeTests/      real window + system WebView on the current OS, fetch() checks against app:// and ipc://
-docs/                         platform notes, releasing, original design document
-```
+## Limitations
 
-## Building from source
-
-Prerequisites: .NET 10 SDK, Node.js 22+. The macOS adapter needs `dotnet workload install macos`; without the workload it is skipped automatically (`-p:AspNetDesktopBuildMac=false|true` to force).
-
-```bash
-npm ci                         # npm workspaces: client + both samples
-npm run build:client
-dotnet build AspNetDesktop.slnx
-```
-
-### Running the samples
-
-**Release** (UI served from `app://`): the build runs `npm run build` and copies the output into `wwwroot`.
-
-```bash
-dotnet run --project samples/AngularApp -c Release --launch-profile "AngularApp (app://)"
-```
-
-**Debug with hot reload**: run the dev server and the desktop process side by side. The window loads the dev server, and `DesktopHttpClient` still calls `ipc://`.
-
-```bash
-npm run start:angular          # ng serve on :4200   (or: npm run start:react / start:vue → Vite on :5173)
-dotnet run --project samples/AngularApp            # Development profile → Desktop:DevServerUrl
-```
-
-### Tests
-
-```bash
-dotnet test --solution AspNetDesktop.slnx          # Hosting: MVC, minimal APIs, static files, SPA fallback, CORS, token, no socket
-npm run test:client                                # client: vanilla, Angular, React and Vue
-dotnet run --project tests/AspNetDesktop.SmokeTests   # real WebView on this OS (Linux: prefix with xvfb-run -a), exit code 0/1
-```
-
-CI runs these on Windows, Linux and macOS, packs the NuGet/npm packages and builds apps from the templates. Each push and pull request runs only the jobs its changes affect.
+- No WebSockets or SignalR: custom schemes don't upgrade to `ws:`. A postMessage transport could come later.
+- No streaming responses: responses are buffered before they're handed to the WebView.
+- One window per app, and no native dialogs, installers or auto-update yet.
 
 ## Contributing
 
-Issues and pull requests are welcome. See [CONTRIBUTING.md](https://github.com/armanossiloko/aspnet-desktop/blob/master/CONTRIBUTING.md), and report security issues privately as described in [SECURITY.md](https://github.com/armanossiloko/aspnet-desktop/blob/master/SECURITY.md). Release notes are on the [releases page](https://github.com/armanossiloko/aspnet-desktop/releases) and in the changelogs for the [NuGet packages](https://github.com/armanossiloko/aspnet-desktop/blob/master/CHANGELOG.md) and the [npm client](https://github.com/armanossiloko/aspnet-desktop/blob/master/src/client/CHANGELOG.md).
-
-## Not in v1
-
-WebSockets/SignalR (custom schemes don't upgrade to `ws:`; a postMessage transport could come later), streaming responses (responses are buffered before being handed to the WebView), multi-window, native dialogs, installers and auto-update.
+Issues and pull requests are welcome. [CONTRIBUTING.md](https://github.com/armanossiloko/aspnet-desktop/blob/master/CONTRIBUTING.md) covers building from source, the samples and the tests; report security issues privately as described in [SECURITY.md](https://github.com/armanossiloko/aspnet-desktop/blob/master/SECURITY.md). Release notes are on the [releases page](https://github.com/armanossiloko/aspnet-desktop/releases) and in the changelogs for the [NuGet packages](https://github.com/armanossiloko/aspnet-desktop/blob/master/CHANGELOG.md) and the [npm client](https://github.com/armanossiloko/aspnet-desktop/blob/master/src/client/CHANGELOG.md).
 
 ## License
 

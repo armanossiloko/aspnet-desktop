@@ -12,8 +12,30 @@ Thanks for helping! Issues, ideas and pull requests are all welcome. Please foll
 
 - [.NET 10 SDK](https://dotnet.microsoft.com/download) (see `global.json`)
 - Node.js 22+ and npm
-- For the macOS adapter: `dotnet workload install macos` (and Xcode on a Mac to run it). Without the workload the Mac project is skipped automatically.
+- For the macOS adapter: `dotnet workload install macos` (and Xcode on a Mac to run it). Without the workload the Mac project is skipped automatically (`-p:AspNetDesktopBuildMac=false|true` to force).
 - For running on Linux: GTK 4 and WebKitGTK 6 (`sudo apt install libgtk-4-1 libwebkitgtk-6.0-4`). See [docs/platforms.md](docs/platforms.md).
+
+## Repository layout
+
+```
+src/
+  AspNetDesktop.Hosting/      IServer, options, policy, AddDesktopHost, CreateClient, RunDesktop(platform)
+  AspNetDesktop.Windows/      net10.0-windows: WinForms + WebView2
+  AspNetDesktop.Mac/          net10.0-macos: NSWindow + WKWebView
+  AspNetDesktop.Linux/        net10.0: GTK 4 + WebKitGTK 6 (GirCore)
+  AspNetDesktop/              metapackage: RunDesktop() picks the adapter for the target framework
+  client/                     aspnetdesktop-client (core client + Angular, React and Vue integrations)
+samples/
+  AngularApp/                 Angular 22 + [ApiController] + minimal API   (also the aspnetdesktop-angular template)
+  ReactApp/                   React 19 + Vite + the same API               (also the aspnetdesktop-react template)
+  VueApp/                     Vue 3 + Vite + the same API                  (also the aspnetdesktop-vue template)
+templates/
+  AspNetDesktop.Templates/    packs the samples as dotnet new templates
+tests/
+  AspNetDesktop.Hosting.Tests/   pipeline + security tests through CreateClient (no WebView)
+  AspNetDesktop.SmokeTests/      real window + system WebView on the current OS, fetch() checks against app:// and ipc://
+docs/                         platform notes, releasing, original design document
+```
 
 ## Build and test
 
