@@ -272,8 +272,16 @@ jobs:
       - name: Publish
         env:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PACKAGE: '@${{ github.repository_owner }}/aspnetdesktop-client'
+          VERSION: ${{ needs.release-please.outputs.client-version }}
           DIST_TAG: ${{ contains(needs.release-please.outputs.client-version, '-') && 'next' || 'latest' }}
-        run: npm publish ./artifacts/${{ github.repository_owner }}-aspnetdesktop-client-*.tgz --tag "$DIST_TAG"
+        run: |
+          # npm has no --skip-duplicate: skip a version that's already there, so publishing a release again works.
+          if [ -n "$(npm view "$PACKAGE@$VERSION" version 2>/dev/null)" ]; then
+            echo "$PACKAGE@$VERSION is already on GitHub Packages."
+            exit 0
+          fi
+          npm publish ./artifacts/${{ github.repository_owner }}-aspnetdesktop-client-*.tgz --tag "$DIST_TAG"
 
       - name: Attach to the GitHub Release
         env:
@@ -344,5 +352,12 @@ jobs:
       - name: Publish
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          VERSION: ${{ needs.release-please.outputs.client-version }}
           DIST_TAG: ${{ contains(needs.release-please.outputs.client-version, '-') && 'next' || 'latest' }}
-        run: npm publish ./artifacts/aspnetdesktop-client-*.tgz --access public --provenance --tag "$DIST_TAG"
+        run: |
+          # Asked anonymously: with trusted publishing there's no token to send.
+          if curl -fsS -o /dev/null "https://registry.npmjs.org/aspnetdesktop-client/$VERSION" 2>/dev/null; then
+            echo "aspnetdesktop-client@$VERSION is already on npmjs.com."
+            exit 0
+          fi
+          npm publish ./artifacts/aspnetdesktop-client-*.tgz --access public --provenance --tag "$DIST_TAG"
