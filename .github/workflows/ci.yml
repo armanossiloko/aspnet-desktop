@@ -208,7 +208,7 @@ jobs:
             os: windows-latest
           - name: Linux
             os: ubuntu-24.04
-          # The macOS workload needs the Xcode version it was built against (27.1), which ships on this image.
+          # The macOS workload needs the Xcode version it was built against (27.2), which ships on this image.
           - name: macOS
             os: xcode-27
     steps:
@@ -227,7 +227,7 @@ jobs:
       - uses: maxim-lobanov/setup-xcode@v1
         if: runner.os == 'macOS'
         with:
-          xcode-version: '27.1'
+          xcode-version: '27.2'
 
       - uses: actions/setup-node@v7
         with:
@@ -280,7 +280,7 @@ jobs:
       - uses: maxim-lobanov/setup-xcode@v1
         if: runner.os == 'macOS'
         with:
-          xcode-version: '27.1'
+          xcode-version: '27.2'
 
       - name: Install GTK 4 and WebKitGTK 6
         if: runner.os == 'Linux'
