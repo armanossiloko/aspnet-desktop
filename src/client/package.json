@@ -83,9 +83,9 @@
     }
   },
   "devDependencies": {
-    "@angular/common": "^22.2.4",
-    "@angular/compiler": "^22.2.0",
-    "@angular/core": "^22.2.0",
+    "@angular/common": "^22.2.5",
+    "@angular/compiler": "^22.2.5",
+    "@angular/core": "^22.2.5",
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
     "react": "^19.3.1",
